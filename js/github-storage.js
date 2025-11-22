@@ -63,7 +63,7 @@ class GitHubStorage {
             }
 
             const data = await response.json();
-            const content = atob(data.content); // Base64 解码
+            const content = this.base64ToUtf8(data.content); // 使用支持中文的 Base64 解码
             return {
                 content: JSON.parse(content),
                 sha: data.sha // 用于更新文件
@@ -71,6 +71,48 @@ class GitHubStorage {
         } catch (error) {
             console.error('获取文件失败:', error);
             throw error;
+        }
+    }
+
+    // UTF-8 字符串转 Base64（支持中文）
+    utf8ToBase64(str) {
+        try {
+            // 使用 TextEncoder 处理 UTF-8
+            const encoder = new TextEncoder();
+            const uint8Array = encoder.encode(str);
+            
+            // 将 Uint8Array 转换为二进制字符串
+            let binaryString = '';
+            uint8Array.forEach(byte => {
+                binaryString += String.fromCharCode(byte);
+            });
+            
+            // Base64 编码
+            return btoa(binaryString);
+        } catch (error) {
+            console.error('Base64 编码失败:', error);
+            throw new Error('数据编码失败');
+        }
+    }
+
+    // Base64 转 UTF-8 字符串（支持中文）
+    base64ToUtf8(base64) {
+        try {
+            // Base64 解码
+            const binaryString = atob(base64);
+            
+            // 转换为 Uint8Array
+            const uint8Array = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                uint8Array[i] = binaryString.charCodeAt(i);
+            }
+            
+            // 使用 TextDecoder 解码 UTF-8
+            const decoder = new TextDecoder();
+            return decoder.decode(uint8Array);
+        } catch (error) {
+            console.error('Base64 解码失败:', error);
+            throw new Error('数据解码失败');
         }
     }
 
@@ -82,9 +124,10 @@ class GitHubStorage {
 
         const url = `https://api.github.com/repos/${this.config.owner}/${this.config.repo}/contents/${this.config.dataPath}${filename}`;
         
+        const jsonString = JSON.stringify(content, null, 2);
         const body = {
             message: `Update ${filename}`,
-            content: btoa(JSON.stringify(content, null, 2)), // Base64 编码
+            content: this.utf8ToBase64(jsonString), // 使用支持中文的 Base64 编码
             branch: this.config.branch
         };
 
