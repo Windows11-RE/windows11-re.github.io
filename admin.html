@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章管理 - 后台管理系统</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <h1 class="logo">博客后台</h1>
+            <ul class="nav-links">
+                <li><a href="index.html">前台首页</a></li>
+                <li><a href="admin.html" class="active">文章管理</a></li>
+                <li><a href="github-config.html">GitHub 配置</a></li>
+                <li><a href="#" onclick="logout(); return false;" class="logout-link">🚪 登出</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="admin-header">
+            <h2>📝 文章管理</h2>
+            <div class="admin-actions">
+                <button class="btn" onclick="createNewPost()">+ 新建文章</button>
+                <button class="btn btn-secondary" onclick="exportAllData()">💾 导出备份</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">📥 导入数据</button>
+                <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(this.files[0])">
+            </div>
+        </div>
+
+        <!-- 总体统计 -->
+        <div class="overall-stats" id="overall-stats">
+            <!-- 统计数据将在这里显示 -->
+        </div>
+
+        <!-- 分类筛选 -->
+        <div class="category-filter">
+            <button class="filter-btn active" data-category="all">全部</button>
+            <button class="filter-btn" data-category="技术">技术</button>
+            <button class="filter-btn" data-category="生活">生活</button>
+            <button class="filter-btn" data-category="随笔">随笔</button>
+            <button class="filter-btn" data-category="教程">教程</button>
+        </div>
+
+        <!-- 文章列表 -->
+        <div class="admin-posts-list" id="admin-posts-list">
+            <!-- 文章列表将在这里显示 -->
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 我的博客. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/categories.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/backup.js"></script>
+    <script src="js/admin.js"></script>
+    <script>
+        // 动态加载分类筛选器
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAdminCategoryFilters();
+        });
+        
+        function loadAdminCategoryFilters() {
+            const categories = getCategories();
+            const filterContainer = document.querySelector('.category-filter');
+            
+            if (!filterContainer) return;
+            
+            // 保留"全部"按钮，添加动态分类
+            filterContainer.innerHTML = '<button class="filter-btn active" data-category="all">全部</button>';
+            
+            categories.forEach(category => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.dataset.category = category;
+                btn.textContent = category;
+                filterContainer.appendChild(btn);
+            });
+            
+            // 重新绑定事件
+            setupCategoryFilter();
+        }
+    </script>
+</body>
+</html>

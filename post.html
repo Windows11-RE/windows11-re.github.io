@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章详情 - 我的个人博客</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <h1 class="logo">我的博客</h1>
+            <ul class="nav-links">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="about.html">关于</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <article class="post-detail" id="post-detail">
+            <!-- 文章内容将通过 JavaScript 动态加载 -->
+        </article>
+        
+        <!-- 评论区 -->
+        <section class="comments-section">
+            <h2>💬 评论区</h2>
+            <p class="markdown-tip">💡 支持 Markdown 格式：<code>**粗体**</code> <code>*斜体*</code> <code>`代码`</code> <code>[链接](url)</code> <code>![图片](url)</code> 使用工具栏快速插入</p>
+            <div id="comments-container">
+                <!-- 评论将在这里显示 -->
+            </div>
+        </section>
+        
+        <div class="post-navigation">
+            <a href="index.html" class="back-link">← 返回首页</a>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 我的博客. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <!-- Marked.js - Markdown 解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/post.js"></script>
+</body>
+</html>
