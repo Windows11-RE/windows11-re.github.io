@@ -23,7 +23,7 @@ class GitHubStorage {
             repo: '',            // 仓库名
             token: '',           // Personal Access Token
             branch: 'main',      // 分支名
-            dataPath: 'data/'    // 数据文件路径
+            dataPath: ''         // 数据文件路径（空字符串表示根目录）
         };
     }
 
@@ -147,8 +147,16 @@ class GitHubStorage {
             });
 
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(`GitHub API 错误: ${error.message}`);
+                const errorData = await response.json();
+                console.error('GitHub API 详细错误:', errorData);
+                
+                // 提供更详细的错误信息
+                let errorMessage = errorData.message || '未知错误';
+                if (errorData.errors) {
+                    errorMessage += ': ' + JSON.stringify(errorData.errors);
+                }
+                
+                throw new Error(`GitHub API 错误 (${response.status}): ${errorMessage}`);
             }
 
             return await response.json();
@@ -288,24 +296,47 @@ class GitHubStorage {
     }
 
     // 同步所有数据到 GitHub
-    async syncAll() {
+    async syncAll(progressCallback = null) {
         const posts = JSON.parse(localStorage.getItem('blogPosts') || '[]');
         const comments = JSON.parse(localStorage.getItem('blogComments') || '{}');
         const categories = JSON.parse(localStorage.getItem('blogCategories') || '[]');
         const analytics = JSON.parse(localStorage.getItem('blogAnalytics') || '{}');
 
-        await this.savePosts(posts);
-        await this.saveComments(comments);
-        await this.saveCategories(categories);
-        await this.saveAnalytics(analytics);
+        const tasks = [
+            { name: '文章数据', fn: () => this.savePosts(posts) },
+            { name: '评论数据', fn: () => this.saveComments(comments) },
+            { name: '分类数据', fn: () => this.saveCategories(categories) },
+            { name: '统计数据', fn: () => this.saveAnalytics(analytics) }
+        ];
+
+        for (let i = 0; i < tasks.length; i++) {
+            const task = tasks[i];
+            if (progressCallback) {
+                progressCallback(task.name, i + 1, tasks.length);
+            }
+            await task.fn();
+        }
     }
 
     // 从 GitHub 拉取所有数据
-    async pullAll() {
-        const posts = await this.getPosts();
-        const comments = await this.getComments();
-        const categories = await this.getCategories();
-        const analytics = await this.getAnalytics();
+    async pullAll(progressCallback = null) {
+        const tasks = [
+            { name: '文章数据', fn: () => this.getPosts() },
+            { name: '评论数据', fn: () => this.getComments() },
+            { name: '分类数据', fn: () => this.getCategories() },
+            { name: '统计数据', fn: () => this.getAnalytics() }
+        ];
+
+        const results = [];
+        for (let i = 0; i < tasks.length; i++) {
+            const task = tasks[i];
+            if (progressCallback) {
+                progressCallback(task.name, i + 1, tasks.length);
+            }
+            results.push(await task.fn());
+        }
+
+        const [posts, comments, categories, analytics] = results;
 
         localStorage.setItem('blogPosts', JSON.stringify(posts));
         localStorage.setItem('blogComments', JSON.stringify(comments));

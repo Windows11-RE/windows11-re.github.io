@@ -2011,6 +2011,37 @@ footer {
     font-family: 'Courier New', monospace;
 }
 
+.status-error ul {
+    margin: 0.5rem 0 0 1.5rem;
+    text-align: left;
+}
+
+.status-error li {
+    margin: 0.3rem 0;
+}
+
+.status-error details {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+}
+
+.status-error summary {
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.status-error pre {
+    margin: 0.5rem 0 0 0;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+}
+
 .config-form {
     background: white;
     padding: 2rem;

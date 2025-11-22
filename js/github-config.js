@@ -114,18 +114,38 @@ async function syncToGitHub() {
     statusDiv.innerHTML = '<p class="status-loading">🔄 正在推送数据...</p>';
     
     try {
-        await githubStorage.syncAll();
+        await githubStorage.syncAll((taskName, current, total) => {
+            statusDiv.innerHTML = `
+                <p class="status-loading">
+                    🔄 正在推送 ${taskName}... (${current}/${total})
+                </p>
+            `;
+        });
+        
         statusDiv.innerHTML = `
             <div class="status-success">
                 <strong>✅ 推送成功！</strong>
                 <p>所有数据已同步到 GitHub</p>
+                <p>文件位置: <code>${githubStorage.config.owner}/${githubStorage.config.repo}</code></p>
             </div>
         `;
     } catch (error) {
+        console.error('推送错误详情:', error);
         statusDiv.innerHTML = `
             <div class="status-error">
                 <strong>❌ 推送失败</strong>
                 <p>${error.message}</p>
+                <details>
+                    <summary>查看详细信息</summary>
+                    <pre>${error.stack || '无详细信息'}</pre>
+                </details>
+                <p><strong>可能的原因：</strong></p>
+                <ul>
+                    <li>Token 权限不足（需要 repo 权限）</li>
+                    <li>仓库不存在或无法访问</li>
+                    <li>网络连接问题</li>
+                    <li>数据格式错误</li>
+                </ul>
             </div>
         `;
     }
@@ -146,7 +166,14 @@ async function pullFromGitHub() {
     statusDiv.innerHTML = '<p class="status-loading">🔄 正在拉取数据...</p>';
     
     try {
-        await githubStorage.pullAll();
+        await githubStorage.pullAll((taskName, current, total) => {
+            statusDiv.innerHTML = `
+                <p class="status-loading">
+                    🔄 正在拉取 ${taskName}... (${current}/${total})
+                </p>
+            `;
+        });
+        
         statusDiv.innerHTML = `
             <div class="status-success">
                 <strong>✅ 拉取成功！</strong>
@@ -158,10 +185,17 @@ async function pullFromGitHub() {
             window.location.reload();
         }, 2000);
     } catch (error) {
+        console.error('拉取错误详情:', error);
         statusDiv.innerHTML = `
             <div class="status-error">
                 <strong>❌ 拉取失败</strong>
                 <p>${error.message}</p>
+                <p><strong>可能的原因：</strong></p>
+                <ul>
+                    <li>GitHub 上还没有数据（请先推送）</li>
+                    <li>Token 权限不足</li>
+                    <li>网络连接问题</li>
+                </ul>
             </div>
         `;
     }
