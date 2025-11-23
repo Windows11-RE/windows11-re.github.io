@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "title": "自我介绍",
+    "date": "2025-11-22",
+    "author": "SYSTEM_Win11_RE",
+    "category": "随笔",
+    "visibility": "public",
+    "excerpt": "欢迎来到我的个人博客！这是关于我的自我介绍。",
+    "coverImage": "https://picsum.photos/800/400?random=1",
+    "content": "# 自我介绍\n\n欢迎来到我的个人博客！以下是自我介绍。\n\n## 我是谁\n\n写博客是一个很好的学习和分享方式。通过写作，我可以：\n\n- 整理和巩固自己的知识\n- 与他人分享经验和见解\n- 记录自己的成长历程\n- 结识志同道合的朋友\n\n## 博客内容\n\n在这个博客中，我将分享：\n\n- 前端开发技术和经验\n- 项目开发心得\n- 学习笔记和总结\n- 生活中的思考和感悟\n\n希望我的分享能对你有所帮助。如果你有任何问题或建议，欢迎在评论区留言！"
+  },
+  {
+    "id": 2,
+    "title": "JavaScript 异步编程指南",
+    "date": "2025-11-20",
+    "author": "博主",
+    "category": "技术",
+    "visibility": "public",
+    "excerpt": "深入理解 JavaScript 中的异步编程，包括回调函数、Promise 和 async/await 的使用方法。",
+    "coverImage": "https://picsum.photos/800/400?random=2",
+    "content": "# JavaScript 异步编程指南\n\nJavaScript 的异步编程是前端开发中非常重要的概念。本文将详细介绍异步编程的三种主要方式。\n\n## 1. 回调函数（Callback）\n\n回调函数是最基础的异步处理方式：\n\n```javascript\nfunction fetchData(callback) {\n    setTimeout(() => {\n        callback('数据加载完成');\n    }, 1000);\n}\n\nfetchData((data) => {\n    console.log(data);\n});\n```\n\n## 2. Promise\n\nPromise 提供了更优雅的异步处理方式。\n\n## 3. Async/Await\n\nAsync/Await 是最现代的异步编程方式。"
+  },
+  {
+    "id": 3,
+    "title": "CSS Grid 布局实战",
+    "date": "2025-11-18",
+    "author": "博主",
+    "category": "教程",
+    "visibility": "public",
+    "excerpt": "通过实际案例学习 CSS Grid 布局系统，掌握现代网页布局的强大工具。",
+    "coverImage": "https://picsum.photos/800/400?random=3",
+    "content": "# CSS Grid 布局实战\n\nCSS Grid 是一个强大的二维布局系统，让网页布局变得更加简单和灵活。"
+  },
+  {
+    "id": 4,
+    "title": "如何提高代码质量",
+    "date": "2025-11-15",
+    "author": "博主",
+    "category": "技术",
+    "visibility": "public",
+    "excerpt": "分享一些提高代码质量的实用技巧，包括代码规范、测试、重构等方面的经验。",
+    "coverImage": "https://picsum.photos/800/400?random=4",
+    "content": "# 如何提高代码质量\n\n高质量的代码不仅易于维护，还能提高开发效率。以下是一些实用的建议。"
+  }
+]
