@@ -186,30 +186,50 @@ function insertFormat(type) {
             }
             break;
         case 'image':
-            // 创建文件选择器
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = 'image/*';
-            fileInput.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    if (file.size > 5 * 1024 * 1024) {
-                        alert('图片大小不能超过 5MB！');
-                        return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const base64Image = event.target.result;
-                        const imgMarkdown = `![${selectedText || file.name}](${base64Image})`;
-                        textarea.value = textarea.value.substring(0, start) + imgMarkdown + textarea.value.substring(end);
-                        textarea.selectionStart = textarea.selectionEnd = start + imgMarkdown.length;
-                        textarea.focus();
-                        textarea.dispatchEvent(new Event('input'));
-                    };
-                    reader.readAsDataURL(file);
+            // 提供两种方式：URL 或本地上传
+            const choice = confirm('点击"确定"输入图片URL\n点击"取消"上传本地图片');
+            
+            if (choice) {
+                // 输入 URL
+                const imgUrl = prompt('请输入图片 URL:', 'https://');
+                if (imgUrl && imgUrl !== 'https://') {
+                    const imgMarkdown = `![${selectedText || '图片'}](${imgUrl})`;
+                    textarea.value = textarea.value.substring(0, start) + imgMarkdown + textarea.value.substring(end);
+                    textarea.selectionStart = textarea.selectionEnd = start + imgMarkdown.length;
+                    textarea.focus();
+                    textarea.dispatchEvent(new Event('input'));
                 }
-            };
-            fileInput.click();
+            } else {
+                // 上传本地图片
+                alert('提示：本地图片会转换为 Base64 编码，建议使用图床服务（如 imgur.com）以获得更好的性能。\n\n推荐图床：\n- https://imgur.com\n- https://sm.ms\n- https://postimages.org');
+                
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        if (file.size > 500 * 1024) {
+                            alert('警告：图片大小超过 500KB，建议压缩后再上传，或使用图床服务。\n\n大图片会导致：\n- 编辑器卡顿\n- 保存缓慢\n- 页面加载慢');
+                            if (!confirm('是否继续上传？')) {
+                                return;
+                            }
+                        }
+                        
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            const base64Image = event.target.result;
+                            const imgMarkdown = `![${selectedText || file.name}](${base64Image})`;
+                            textarea.value = textarea.value.substring(0, start) + imgMarkdown + textarea.value.substring(end);
+                            textarea.selectionStart = textarea.selectionEnd = start + imgMarkdown.length;
+                            textarea.focus();
+                            textarea.dispatchEvent(new Event('input'));
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+                fileInput.click();
+            }
             return;
         case 'list':
             const lines = selectedText ? selectedText.split('\n') : ['列表项 1', '列表项 2'];
@@ -417,13 +437,7 @@ function showPostStats() {
                         <div class="stat-label">浏览次数</div>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon">💬</div>
-                    <div class="stat-info">
-                        <div class="stat-value">${stats.comments}</div>
-                        <div class="stat-label">评论数</div>
-                    </div>
-                </div>
+
                 <div class="stat-card">
                     <div class="stat-icon">📁</div>
                     <div class="stat-info">

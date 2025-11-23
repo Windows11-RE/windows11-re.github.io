@@ -26,6 +26,7 @@
                 <button class="btn" onclick="createNewPost()">+ 新建文章</button>
                 <button class="btn btn-secondary" onclick="exportAllData()">💾 导出备份</button>
                 <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">📥 导入数据</button>
+                <button class="btn btn-secondary" onclick="generateAllPostsHTML()">📄 生成 HTML</button>
                 <button class="btn btn-secondary" onclick="resetInitFlag()" title="重置初始化标记">🔄 重置</button>
                 <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(this.files[0])">
             </div>
@@ -62,6 +63,7 @@
     <script src="js/categories.js"></script>
     <script src="js/analytics.js"></script>
     <script src="js/backup.js"></script>
+    <script src="js/post-generator.js"></script>
     <script src="js/admin.js"></script>
     <script>
         // 动态加载分类筛选器

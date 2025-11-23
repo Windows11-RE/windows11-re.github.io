@@ -49,8 +49,7 @@ function loadPostsList(category = 'all') {
                         <span>✍️ ${post.author || '博主'}</span>
                     </div>
                     <div class="admin-post-stats">
-                        <span title="浏览次数">👁️ ${stats.views}</span>
-                        <span title="评论数">💬 ${stats.comments}</span>
+                        <span title="浏览次数">👁️ ${stats.views} 次浏览</span>
                     </div>
                     <p class="admin-post-excerpt">${post.excerpt}</p>
                 </div>
@@ -61,6 +60,9 @@ function loadPostsList(category = 'all') {
                 </button>
                 <button class="btn-icon" onclick="editPost(${post.id})" title="编辑">
                     ✏️
+                </button>
+                <button class="btn-icon" onclick="generateSinglePostHTML(${post.id})" title="生成 HTML">
+                    📄
                 </button>
                 <button class="btn-icon btn-danger" onclick="deletePost(${post.id})" title="删除">
                     🗑️
@@ -151,13 +153,7 @@ function loadOverallStats() {
                 <div class="stat-label">总浏览量</div>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon">💬</div>
-            <div class="stat-info">
-                <div class="stat-value">${stats.totalComments}</div>
-                <div class="stat-label">总评论数</div>
-            </div>
-        </div>
+
         <div class="stat-card">
             <div class="stat-icon">🌍</div>
             <div class="stat-info">
@@ -181,6 +177,42 @@ function resetInitFlag() {
         localStorage.removeItem('blogInitialized');
         alert('初始化标记已重置！\n\n如果当前没有文章，刷新前端页面将重新创建示例文章。');
     }
+}
+
+// 生成所有文章的 HTML 文件
+function generateAllPostsHTML() {
+    const posts = getPosts();
+    
+    if (posts.length === 0) {
+        alert('没有文章可以生成！');
+        return;
+    }
+    
+    if (!confirm(`确定要生成 ${posts.length} 篇文章的 HTML 文件吗？\n\n文件将自动下载到您的下载文件夹。\n建议创建一个 "posts" 文件夹来存放这些文件。`)) {
+        return;
+    }
+    
+    alert('开始生成文章...\n\n请稍候，文件将陆续下载。');
+    
+    postGenerator.downloadAllPosts(posts);
+    
+    setTimeout(() => {
+        alert(`✅ 已生成 ${posts.length} 篇文章！\n\n请将下载的文件放入项目的 "posts" 文件夹中。\n\n文件命名格式：post-{ID}-{标题}.html`);
+    }, posts.length * 500 + 1000);
+}
+
+// 生成单篇文章的 HTML
+function generateSinglePostHTML(postId) {
+    const posts = getPosts();
+    const post = posts.find(p => p.id === postId);
+    
+    if (!post) {
+        alert('文章不存在！');
+        return;
+    }
+    
+    postGenerator.downloadPost(post);
+    alert(`✅ 文章《${post.title}》已生成！\n\n请将文件放入项目的 "posts" 文件夹中。`);
 }
 
 // 页面加载完成后执行

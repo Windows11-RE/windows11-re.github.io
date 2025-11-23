@@ -589,7 +589,6 @@ function setupImageLightbox() {
 // 页面加载完成后执行
 document.addEventListener('DOMContentLoaded', () => {
     loadPostDetail();
-    loadComments();
     setupImageLightbox();
     
     // 记录浏览次数
