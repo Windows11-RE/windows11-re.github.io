@@ -141,17 +141,28 @@ function loadPosts(category = 'all') {
     
     if (!postsContainer) return;
     
+    // 获取文章（已过滤私密文章）
     const posts = getPosts();
+    
+    // 按分类筛选
     const filteredPosts = category === 'all' 
         ? posts 
         : posts.filter(p => p.category === category);
     
-    if (filteredPosts.length === 0) {
+    // 再次确保没有私密文章（双重保险）
+    const publicPosts = filteredPosts.filter(p => {
+        // 如果没有 visibility 字段，默认为公开
+        if (!p.visibility) return true;
+        // 只显示公开文章
+        return p.visibility === 'public';
+    });
+    
+    if (publicPosts.length === 0) {
         postsContainer.innerHTML = '<p class="empty-message">暂无文章</p>';
         return;
     }
     
-    postsContainer.innerHTML = filteredPosts.map(post => `
+    postsContainer.innerHTML = publicPosts.map(post => `
         <article class="post-card" onclick="viewPost(${post.id})">
             ${post.coverImage ? `<img src="${post.coverImage}" alt="${post.title}" class="post-card-cover">` : ''}
             <div class="post-card-content">
