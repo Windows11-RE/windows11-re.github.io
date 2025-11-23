@@ -229,10 +229,7 @@ function loadPostDetail() {
     // 更新页面标题
     document.title = `${post.title} - 我的个人博客`;
     
-    // 渲染 Markdown 内容
-    const renderedContent = marked.parse(post.content);
-    
-    // 渲染文章内容
+    // 渲染文章内容（内容已经是 HTML 格式，无需再解析）
     container.innerHTML = `
         <header class="post-header">
             <h1>${post.title}</h1>
@@ -243,8 +240,8 @@ function loadPostDetail() {
             </div>
         </header>
         ${post.coverImage ? `<img src="${post.coverImage}" alt="${post.title}" class="post-cover">` : ''}
-        <div class="post-content markdown-content">
-            ${renderedContent}
+        <div class="post-content">
+            ${post.content}
         </div>
     `;
 }

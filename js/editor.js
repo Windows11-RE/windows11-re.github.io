@@ -1,3 +1,6 @@
+// Quill 编辑器实例
+let quillEditor = null;
+
 // 获取文章数据
 function getPosts() {
     return JSON.parse(localStorage.getItem('blogPosts') || '[]');
@@ -12,6 +15,37 @@ function savePosts(posts) {
 function getUrlParam(name) {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(name);
+}
+
+// 初始化 Quill 编辑器
+function initQuillEditor() {
+    const toolbarOptions = [
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        [{ 'size': ['small', false, 'large', 'huge'] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'color': [] }, { 'background': [] }],
+        [{ 'script': 'sub'}, { 'script': 'super' }],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],
+        [{ 'align': [] }],
+        ['blockquote', 'code-block'],
+        ['link', 'image', 'video'],
+        ['clean']
+    ];
+
+    quillEditor = new Quill('#editor-container', {
+        theme: 'snow',
+        modules: {
+            toolbar: toolbarOptions
+        },
+        placeholder: '开始编写你的文章内容...'
+    });
+
+    // 监听内容变化，同步到隐藏的 textarea
+    quillEditor.on('text-change', function() {
+        const html = quillEditor.root.innerHTML;
+        document.getElementById('post-content').value = html;
+    });
 }
 
 // 加载文章数据到编辑器
@@ -30,7 +64,11 @@ function loadPostToEditor() {
             document.getElementById('post-visibility').value = post.visibility || 'public';
             document.getElementById('post-excerpt').value = post.excerpt;
             document.getElementById('post-cover').value = post.coverImage || '';
-            document.getElementById('post-content').value = post.content;
+            
+            // 加载内容到 Quill 编辑器
+            if (quillEditor && post.content) {
+                quillEditor.root.innerHTML = post.content;
+            }
             
             // 显示封面预览
             if (post.coverImage) {
@@ -56,9 +94,11 @@ function savePost() {
     const visibility = document.getElementById('post-visibility').value;
     const excerpt = document.getElementById('post-excerpt').value.trim();
     const coverImage = document.getElementById('post-cover').value.trim();
-    const content = document.getElementById('post-content').value.trim();
     
-    if (!title || !category || !excerpt || !content) {
+    // 从 Quill 编辑器获取内容
+    const content = quillEditor ? quillEditor.root.innerHTML.trim() : '';
+    
+    if (!title || !category || !excerpt || !content || content === '<p><br></p>') {
         alert('请填写所有必填项！');
         return;
     }
@@ -115,12 +155,13 @@ function previewPost() {
     const author = document.getElementById('post-author').value.trim();
     const category = document.getElementById('post-category').value;
     const coverImage = document.getElementById('post-cover').value.trim();
-    const content = document.getElementById('post-content').value.trim();
+    
+    // 从 Quill 编辑器获取 HTML 内容
+    const content = quillEditor ? quillEditor.root.innerHTML : '';
     
     const now = new Date().toLocaleDateString('zh-CN');
     
     const previewContent = document.getElementById('preview-content');
-    const renderedContent = marked.parse(content || '*内容为空*');
     
     previewContent.innerHTML = `
         <article class="post-detail">
@@ -133,8 +174,8 @@ function previewPost() {
                 </div>
             </header>
             ${coverImage ? `<img src="${coverImage}" alt="${title}" class="post-cover">` : ''}
-            <div class="post-content markdown-content">
-                ${renderedContent}
+            <div class="post-content">
+                ${content || '<p><em>内容为空</em></p>'}
             </div>
         </article>
     `;
@@ -147,107 +188,7 @@ function closePreview() {
     document.getElementById('preview-modal').classList.remove('active');
 }
 
-// 插入格式
-function insertFormat(type) {
-    const textarea = document.getElementById('post-content');
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-    
-    let replacement = '';
-    let cursorOffset = 0;
-    
-    switch (type) {
-        case 'bold':
-            replacement = `**${selectedText || '粗体文本'}**`;
-            cursorOffset = selectedText ? replacement.length : -2;
-            break;
-        case 'italic':
-            replacement = `*${selectedText || '斜体文本'}*`;
-            cursorOffset = selectedText ? replacement.length : -1;
-            break;
-        case 'heading':
-            replacement = `### ${selectedText || '标题'}`;
-            cursorOffset = replacement.length;
-            break;
-        case 'code':
-            if (selectedText.includes('\n')) {
-                replacement = `\`\`\`\n${selectedText || '代码块'}\n\`\`\``;
-            } else {
-                replacement = `\`${selectedText || '代码'}\``;
-            }
-            cursorOffset = replacement.length;
-            break;
-        case 'link':
-            const url = prompt('请输入链接地址:', 'https://');
-            if (url) {
-                replacement = `[${selectedText || '链接文本'}](${url})`;
-                cursorOffset = replacement.length;
-            }
-            break;
-        case 'image':
-            // 提供两种方式：URL 或本地上传
-            const choice = confirm('点击"确定"输入图片URL\n点击"取消"上传本地图片');
-            
-            if (choice) {
-                // 输入 URL
-                const imgUrl = prompt('请输入图片 URL:', 'https://');
-                if (imgUrl && imgUrl !== 'https://') {
-                    const imgMarkdown = `![${selectedText || '图片'}](${imgUrl})`;
-                    textarea.value = textarea.value.substring(0, start) + imgMarkdown + textarea.value.substring(end);
-                    textarea.selectionStart = textarea.selectionEnd = start + imgMarkdown.length;
-                    textarea.focus();
-                    textarea.dispatchEvent(new Event('input'));
-                }
-            } else {
-                // 上传本地图片
-                alert('提示：本地图片会转换为 Base64 编码，建议使用图床服务（如 imgur.com）以获得更好的性能。\n\n推荐图床：\n- https://imgur.com\n- https://sm.ms\n- https://postimages.org');
-                
-                const fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.accept = 'image/*';
-                fileInput.onchange = (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        if (file.size > 500 * 1024) {
-                            alert('警告：图片大小超过 500KB，建议压缩后再上传，或使用图床服务。\n\n大图片会导致：\n- 编辑器卡顿\n- 保存缓慢\n- 页面加载慢');
-                            if (!confirm('是否继续上传？')) {
-                                return;
-                            }
-                        }
-                        
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            const base64Image = event.target.result;
-                            const imgMarkdown = `![${selectedText || file.name}](${base64Image})`;
-                            textarea.value = textarea.value.substring(0, start) + imgMarkdown + textarea.value.substring(end);
-                            textarea.selectionStart = textarea.selectionEnd = start + imgMarkdown.length;
-                            textarea.focus();
-                            textarea.dispatchEvent(new Event('input'));
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                };
-                fileInput.click();
-            }
-            return;
-        case 'list':
-            const lines = selectedText ? selectedText.split('\n') : ['列表项 1', '列表项 2'];
-            replacement = lines.map(line => `- ${line}`).join('\n');
-            cursorOffset = replacement.length;
-            break;
-        case 'quote':
-            replacement = `> ${selectedText || '引用内容'}`;
-            cursorOffset = replacement.length;
-            break;
-    }
-    
-    if (replacement) {
-        textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
-        textarea.selectionStart = textarea.selectionEnd = start + cursorOffset;
-        textarea.focus();
-    }
-}
+// 这个函数已不再需要，因为 Quill 编辑器有自己的工具栏
 
 // 处理封面图片上传
 function handleCoverImageUpload(event) {
@@ -502,10 +443,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // 保护页面
     protectPage();
     
+    // 初始化 Quill 编辑器
+    initQuillEditor();
+    
     // 加载分类到下拉框
     loadCategoriesToSelect();
     
-    loadPostToEditor();
+    // 加载文章数据（需要在编辑器初始化后）
+    setTimeout(() => {
+        loadPostToEditor();
+    }, 100);
     
     // 点击模态框背景关闭
     document.getElementById('preview-modal').addEventListener('click', (e) => {
