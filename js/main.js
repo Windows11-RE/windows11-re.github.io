@@ -14,8 +14,11 @@ function isAuthenticated() {
 function getPosts() {
     const allPosts = JSON.parse(localStorage.getItem('blogPosts') || '[]');
     
-    // 如果没有数据，初始化示例数据
-    if (allPosts.length === 0) {
+    // 检查是否已经初始化过
+    const hasInitialized = localStorage.getItem('blogInitialized');
+    
+    // 只在第一次访问且没有数据时初始化示例数据
+    if (allPosts.length === 0 && !hasInitialized) {
         const defaultPosts = [
             {
                 id: 1,
@@ -115,6 +118,7 @@ CSS Grid 是一个强大的二维布局系统，让网页布局变得更加简�
             }
         ];
         localStorage.setItem('blogPosts', JSON.stringify(defaultPosts));
+        localStorage.setItem('blogInitialized', 'true'); // 标记已初始化
         
         // 如果未登录，只返回公开文章
         if (!isAuthenticated()) {

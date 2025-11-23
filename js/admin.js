@@ -93,14 +93,25 @@ function deletePost(postId) {
     }
     
     const posts = getPosts();
+    const deletedPost = posts.find(p => p.id === postId);
     const filteredPosts = posts.filter(p => p.id !== postId);
     savePosts(filteredPosts);
     
-    // 重新加载列表
+    // 同时删除该文章的评论
+    const allComments = JSON.parse(localStorage.getItem('blogComments') || '{}');
+    if (allComments[postId]) {
+        delete allComments[postId];
+        localStorage.setItem('blogComments', JSON.stringify(allComments));
+    }
+    
+    // 重新加载统计和列表
+    loadOverallStats();
     const activeCategory = document.querySelector('.filter-btn.active').dataset.category;
     loadPostsList(activeCategory);
     
-    alert('文章已删除！');
+    // 提示用户
+    const message = `文章《${deletedPost ? deletedPost.title : ''}》已删除！\n\n前端页面会自动同步，刷新即可看到更新。`;
+    alert(message);
 }
 
 // 分类筛选
@@ -162,6 +173,14 @@ function loadOverallStats() {
             </div>
         </div>
     `;
+}
+
+// 重置初始化标记（用于测试）
+function resetInitFlag() {
+    if (confirm('确定要重置初始化标记吗？\n\n这将允许系统在数据为空时重新创建示例文章。')) {
+        localStorage.removeItem('blogInitialized');
+        alert('初始化标记已重置！\n\n如果当前没有文章，刷新前端页面将重新创建示例文章。');
+    }
 }
 
 // 页面加载完成后执行
