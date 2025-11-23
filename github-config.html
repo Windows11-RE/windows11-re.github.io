@@ -107,6 +107,17 @@
 
     <script src="js/auth.js"></script>
     <script src="js/github-storage.js"></script>
+    <script src="js/bing-wallpaper.js"></script>
     <script src="js/github-config.js"></script>
+    <script>
+        // 应用必应每日一图背景
+        document.addEventListener('DOMContentLoaded', async () => {
+            await applyBingWallpaperToBody({
+                overlay: true,
+                overlayColor: 'rgba(255, 255, 255, 0.15)'
+            });
+            document.body.classList.add('has-wallpaper');
+        });
+    </script>
 </body>
 </html>

@@ -37,6 +37,17 @@
     <!-- Marked.js - Markdown 解析库 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="js/analytics.js"></script>
+    <script src="js/bing-wallpaper.js"></script>
     <script src="js/post.js"></script>
+    <script>
+        // 应用必应每日一图背景
+        document.addEventListener('DOMContentLoaded', async () => {
+            await applyBingWallpaperToBody({
+                overlay: true,
+                overlayColor: 'rgba(255, 255, 255, 0.1)'
+            });
+            document.body.classList.add('has-wallpaper');
+        });
+    </script>
 </body>
 </html>

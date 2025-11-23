@@ -45,10 +45,11 @@
 
     <script src="js/auth.js"></script>
     <script src="js/categories.js"></script>
+    <script src="js/bing-wallpaper.js"></script>
     <script src="js/main.js"></script>
     <script>
         // 根据登录状态更新导航栏
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const navLinks = document.getElementById('nav-links');
             if (isAuthenticated()) {
                 navLinks.innerHTML += `
@@ -58,6 +59,13 @@
             
             // 动态加载分类筛选器
             loadCategoryFilters();
+            
+            // 应用必应每日一图背景
+            await applyBingWallpaperToBody({
+                overlay: true,
+                overlayColor: 'rgba(255, 255, 255, 0.1)'
+            });
+            document.body.classList.add('has-wallpaper');
         });
         
         // 动态加载分类筛选器

@@ -26,6 +26,17 @@
         </div>
     </div>
 
+    <script src="js/bing-wallpaper.js"></script>
     <script src="js/auth.js"></script>
+    <script>
+        // 应用必应每日一图背景（登录页面使用更深的遮罩）
+        document.addEventListener('DOMContentLoaded', async () => {
+            await applyBingWallpaperToBody({
+                overlay: true,
+                overlayColor: 'rgba(0, 0, 0, 0.4)'
+            });
+            document.body.classList.add('has-wallpaper');
+        });
+    </script>
 </body>
 </html>

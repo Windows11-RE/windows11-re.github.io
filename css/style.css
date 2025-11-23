@@ -9,6 +9,39 @@ body {
     line-height: 1.6;
     color: #333;
     background-color: #f5f5f5;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* 必应壁纸背景支持 */
+body.has-wallpaper {
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* 内容区域背景优化 */
+body.has-wallpaper .container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 10px;
+    padding: 2rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+/* 头部导航优化 */
+body.has-wallpaper header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+/* 页脚优化 */
+body.has-wallpaper footer {
+    background: rgba(44, 62, 80, 0.95);
+    backdrop-filter: blur(10px);
 }
 
 .container {
@@ -2167,5 +2200,106 @@ footer {
     
     .help-link {
         text-align: center;
+    }
+}
+
+/* 必应壁纸版权信息样式 */
+.bing-copyright {
+    transition: opacity 0.3s;
+}
+
+.bing-copyright:hover {
+    opacity: 0.8;
+}
+
+.bing-copyright a {
+    color: white !important;
+    text-decoration: none !important;
+}
+
+.bing-copyright a:hover {
+    text-decoration: underline !important;
+}
+
+/* 登录页面背景优化 */
+body.has-wallpaper .login-container {
+    background: transparent;
+}
+
+body.has-wallpaper .login-box {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Hero 区域优化 */
+body.has-wallpaper .hero {
+    background: rgba(102, 126, 234, 0.9);
+    backdrop-filter: blur(10px);
+}
+
+/* 文章卡片优化 */
+body.has-wallpaper .post-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+body.has-wallpaper .post-card:hover {
+    background: rgba(255, 255, 255, 1);
+}
+
+/* 文章详情页优化 */
+body.has-wallpaper .post-detail {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+/* 管理页面卡片优化 */
+body.has-wallpaper .admin-post-item,
+body.has-wallpaper .stat-card,
+body.has-wallpaper .config-form,
+body.has-wallpaper .sync-section,
+body.has-wallpaper .editor-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+/* 空状态优化 */
+body.has-wallpaper .empty-state {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+/* 模态框优化 */
+body.has-wallpaper .modal-content {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+}
+
+/* 加载动画 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+body.has-wallpaper {
+    animation: fadeIn 0.5s ease-in;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .bing-copyright {
+        font-size: 10px;
+        padding: 3px 6px;
+        bottom: 5px;
+        right: 5px;
+    }
+    
+    body.has-wallpaper .container {
+        padding: 1rem;
     }
 }
