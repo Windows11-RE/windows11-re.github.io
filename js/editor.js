@@ -19,6 +19,22 @@ function getUrlParam(name) {
 
 // 初始化 Quill 编辑器
 function initQuillEditor() {
+    console.log('开始初始化 Quill 编辑器...');
+    
+    // 检查 Quill 是否已加载
+    if (typeof Quill === 'undefined') {
+        console.error('Quill 库未加载！');
+        alert('编辑器加载失败，请刷新页面重试。如果问题持续，请检查网络连接。');
+        return;
+    }
+    
+    // 检查容器是否存在
+    const container = document.querySelector('#editor-container');
+    if (!container) {
+        console.error('编辑器容器 #editor-container 不存在！');
+        return;
+    }
+    
     const toolbarOptions = [
         [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
         [{ 'size': ['small', false, 'large', 'huge'] }],
@@ -33,19 +49,26 @@ function initQuillEditor() {
         ['clean']
     ];
 
-    quillEditor = new Quill('#editor-container', {
-        theme: 'snow',
-        modules: {
-            toolbar: toolbarOptions
-        },
-        placeholder: '开始编写你的文章内容...'
-    });
+    try {
+        quillEditor = new Quill('#editor-container', {
+            theme: 'snow',
+            modules: {
+                toolbar: toolbarOptions
+            },
+            placeholder: '开始编写你的文章内容...'
+        });
 
-    // 监听内容变化，同步到隐藏的 textarea
-    quillEditor.on('text-change', function() {
-        const html = quillEditor.root.innerHTML;
-        document.getElementById('post-content').value = html;
-    });
+        // 监听内容变化，同步到隐藏的 textarea
+        quillEditor.on('text-change', function() {
+            const html = quillEditor.root.innerHTML;
+            document.getElementById('post-content').value = html;
+        });
+        
+        console.log('Quill 编辑器初始化成功！', quillEditor);
+    } catch (error) {
+        console.error('Quill 编辑器初始化失败：', error);
+        alert('编辑器初始化失败：' + error.message);
+    }
 }
 
 // 加载文章数据到编辑器
@@ -440,10 +463,13 @@ function viewPostInFrontend(postId) {
 
 // 页面加载完成后执行
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('页面 DOM 加载完成');
+    
     // 保护页面
     protectPage();
     
     // 初始化 Quill 编辑器
+    console.log('准备初始化 Quill 编辑器');
     initQuillEditor();
     
     // 加载分类到下拉框
@@ -451,6 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 加载文章数据（需要在编辑器初始化后）
     setTimeout(() => {
+        console.log('加载文章数据到编辑器');
         loadPostToEditor();
     }, 100);
     
