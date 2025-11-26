@@ -1,2 +1,92 @@
-// Obfuscated Authentication Module - Do Not Edit Manually
-(function(_0x4d8f,_0x2c91){const _0x3e7a=_0x1f9c;while(!![]){try{const _0x5b2d=-parseInt(_0x3e7a(0x1a8))/0x1+-parseInt(_0x3e7a(0x1b2))/0x2*(parseInt(_0x3e7a(0x1ad))/0x3)+parseInt(_0x3e7a(0x1b5))/0x4+-parseInt(_0x3e7a(0x1a9))/0x5+parseInt(_0x3e7a(0x1b8))/0x6+-parseInt(_0x3e7a(0x1af))/0x7*(-parseInt(_0x3e7a(0x1b1))/0x8)+parseInt(_0x3e7a(0x1b6))/0x9;if(_0x5b2d===_0x2c91)break;else _0x4d8f['push'](_0x4d8f['shift']());}catch(_0x3c8e){_0x4d8f['push'](_0x4d8f['shift']());}}}(_0x4e2c,0x7d8f3));function _0x1f9c(_0x2d4e,_0x5c91){const _0x4e2c=_0x4e2c();return _0x1f9c=function(_0x1f9c,_0x3e7a){_0x1f9c=_0x1f9c-0x1a8;let _0x5b2d=_0x4e2c[_0x1f9c];return _0x5b2d;},_0x1f9c(_0x2d4e,_0x5c91);}function _0x4e2c(){const _0x3d8f=['blogAuth','getItem','parse','timestamp','now','isAuthenticated','username','password','A4FF6E052DADF38EA28A7E4A77E2104D','admin','setItem','stringify','removeItem','login.html','location','href','getElementById','login-form','addEventListener','submit','preventDefault','value','trim','登录成功！','admin.html','用户名或密码错误！','focus','5400000','1234567','2345678','3456789','4567890','5678901'];_0x4e2c=function(){return _0x3d8f;};return _0x4e2c();}const _0x5e8a12=_0x1f9c,_0x3f2b={'authKey':_0x5e8a12(0x1a8),'sessionTime':0x5265c00,'adminUser':_0x5e8a12(0x1b7),'adminPass':_0x5e8a12(0x1b0)};function _0x2e4f(){const _0x4c8d=_0x1f9c,_0x1d3e=localStorage[_0x4c8d(0x1a9)](_0x3f2b['authKey']);if(!_0x1d3e)return![];try{const _0x5a2c=JSON[_0x4c8d(0x1aa)](_0x1d3e),_0x3b1f=Date[_0x4c8d(0x1ac)]();return _0x3b1f-_0x5a2c[_0x4c8d(0x1ab)]>_0x3f2b['sessionTime']?(_0x4f8e(),![]):_0x5a2c[_0x4c8d(0x1ad)]===!![];}catch(_0x2d7e){return![];}}function _0x3c5d(_0x1e2f,_0x4b3c){const _0x2a8e=_0x1f9c;if(_0x1e2f===_0x3f2b['adminUser']&&_0x4b3c===_0x3f2b['adminPass']){const _0x5d1a={'isAuthenticated':!![],'username':_0x1e2f,'timestamp':Date[_0x2a8e(0x1ac)]()};return localStorage[_0x2a8e(0x1b8)](_0x3f2b['authKey'],JSON[_0x2a8e(0x1b9)](_0x5d1a)),!![];}return![];}function _0x4f8e(){const _0x3e9d=_0x1f9c;localStorage[_0x3e9d(0x1ba)](_0x3f2b['authKey']),window[_0x3e9d(0x1bc)][_0x3e9d(0x1bd)]=_0x3e9d(0x1bb);}function _0x1a7c(){const _0x5c2e=_0x1f9c,_0x4e1d=localStorage[_0x5c2e(0x1a9)](_0x3f2b['authKey']);if(!_0x4e1d)return null;try{const _0x2f3b=JSON[_0x5c2e(0x1aa)](_0x4e1d);return _0x2f3b[_0x5c2e(0x1ae)];}catch(_0x3d2a){return null;}}function _0x5b3e(){const _0x4a9c=_0x1f9c;!_0x2e4f()&&(window[_0x4a9c(0x1bc)][_0x4a9c(0x1bd)]=_0x4a9c(0x1bb));}const isAuthenticated=_0x2e4f,login=_0x3c5d,logout=_0x4f8e,getCurrentUser=_0x1a7c,protectPage=_0x5b3e;if(document[_0x5e8a12(0x1be)](_0x5e8a12(0x1bf))){document[_0x5e8a12(0x1be)](_0x5e8a12(0x1bf))[_0x5e8a12(0x1c0)](_0x5e8a12(0x1c1),_0x4d2e=>{const _0x2b7f=_0x5e8a12;_0x4d2e[_0x2b7f(0x1c2)]();const _0x3e5c=document[_0x2b7f(0x1be)](_0x2b7f(0x1ae))[_0x2b7f(0x1c3)][_0x2b7f(0x1c4)](),_0x1f8d=document[_0x2b7f(0x1be)](_0x2b7f(0x1af))[_0x2b7f(0x1c3)];login(_0x3e5c,_0x1f8d)?(alert(_0x2b7f(0x1c5)),window[_0x2b7f(0x1bc)][_0x2b7f(0x1bd)]=_0x2b7f(0x1c6)):(alert(_0x2b7f(0x1c7)),document[_0x2b7f(0x1be)](_0x2b7f(0x1af))[_0x2b7f(0x1c3)]='',document[_0x2b7f(0x1be)](_0x2b7f(0x1af))[_0x2b7f(0x1c8)]());});}
+// 认证管理 - 原始版本备份
+// 此文件是 auth.js 的原始版本备份，请勿删除
+// 如果混淆版本出现问题，可以用此文件恢复
+
+const AUTH_KEY = 'blogAuth';
+const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24小时
+
+// 管理员账号
+const DEFAULT_ADMIN = {
+    username: 'admin',
+    password: 'A4FF6E052DADF38EA28A7E4A77E2104D'
+};
+
+// 检查是否已登录
+function isAuthenticated() {
+    const auth = localStorage.getItem(AUTH_KEY);
+    if (!auth) return false;
+    
+    try {
+        const authData = JSON.parse(auth);
+        const now = Date.now();
+        
+        // 检查会话是否过期
+        if (now - authData.timestamp > SESSION_DURATION) {
+            logout();
+            return false;
+        }
+        
+        return authData.isAuthenticated === true;
+    } catch (e) {
+        return false;
+    }
+}
+
+// 登录
+function login(username, password) {
+    if (username === DEFAULT_ADMIN.username && password === DEFAULT_ADMIN.password) {
+        const authData = {
+            isAuthenticated: true,
+            username: username,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
+        return true;
+    }
+    return false;
+}
+
+// 登出
+function logout() {
+    localStorage.removeItem(AUTH_KEY);
+    window.location.href = 'login.html';
+}
+
+// 获取当前用户
+function getCurrentUser() {
+    const auth = localStorage.getItem(AUTH_KEY);
+    if (!auth) return null;
+    
+    try {
+        const authData = JSON.parse(auth);
+        return authData.username;
+    } catch (e) {
+        return null;
+    }
+}
+
+// 保护页面（需要登录才能访问）
+function protectPage() {
+    if (!isAuthenticated()) {
+        window.location.href = 'login.html';
+    }
+}
+
+// 登录页面逻辑
+if (document.getElementById('login-form')) {
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        
+        if (login(username, password)) {
+            alert('登录成功！');
+            window.location.href = 'admin.html';
+        } else {
+            alert('用户名或密码错误！');
+            document.getElementById('password').value = '';
+            document.getElementById('password').focus();
+        }
+    });
+}
