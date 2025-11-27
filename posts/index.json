@@ -1,0 +1,15 @@
+{
+  "posts": [],
+  "_comment": "这是文章索引文件。使用 generate-static-posts.html 生成。",
+  "_example": {
+    "id": 1732012345678,
+    "title": "文章标题",
+    "date": "2025-11-22",
+    "author": "博主",
+    "category": "技术",
+    "excerpt": "文章摘要",
+    "coverImage": "https://example.com/cover.jpg",
+    "url": "posts/技术/article-name.html",
+    "visibility": "public"
+  }
+}

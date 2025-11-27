@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章管理器</title>
+    <!-- Quill 富文本编辑器 -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@1.3.6/dist/quill.snow.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 左侧文章列表 */
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .sidebar-header h1 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .batch-mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .batch-mode-toggle input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        .batch-mode-toggle label {
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-success {
+            background: #27ae60;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .article-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .article-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .article-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .article-item.active {
+            background: #e3f2fd;
+            border-left-color: #667eea;
+        }
+
+        .article-item.selected {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .article-checkbox {
+            display: none;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .batch-mode .article-checkbox {
+            display: block;
+        }
+
+        .article-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .article-item h3 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .article-item .meta {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .article-item .category {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-right: 5px;
+        }
+
+        /* 中间编辑区 */
+        .editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .editor-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-title {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .editor-actions button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .editor-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Quill 编辑器样式 */
+        #editor-container {
+            height: 400px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .ql-container {
+            font-size: 15px;
+        }
+
+        /* 右侧预览区 */
+        .preview-area {
+            width: 400px;
+            background: white;
+            border-left: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .preview-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .preview-header h2 {
+            font-size: 16px;
+            color: #333;
+        }
+
+        .preview-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .preview-article {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .preview-article h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .preview-article .meta {
+            color: #999;
+            font-size: 13px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .preview-article .content {
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .preview-article .content h2 {
+            font-size: 20px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .preview-article .content h3 {
+            font-size: 18px;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+
+        .preview-article .content p {
+            margin-bottom: 15px;
+        }
+
+        .preview-article .content img {
+            max-width: 100%;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+        }
+
+        .empty-state .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        /* 状态提示 */
+        .status-bar {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-saved {
+            color: #27ae60;
+        }
+
+        .status-unsaved {
+            color: #e74c3c;
+        }
+
+        /* 批量操作 */
+        .batch-actions {
+            padding: 15px;
+            background: #fff3cd;
+            border-top: 1px solid #ffc107;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .batch-actions.active {
+            display: flex;
+        }
+
+        .batch-actions-info {
+            font-size: 14px;
+            color: #856404;
+            font-weight: 500;
+        }
+
+        .batch-actions-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .batch-actions button {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .preview-area {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: absolute;
+                z-index: 100;
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧文章列表 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>📝 文章管理器</h1>
+                <div class="batch-mode-toggle" onclick="toggleBatchMode()">
+                    <input type="checkbox" id="batch-mode-checkbox">
+                    <label for="batch-mode-checkbox">批量选择</label>
+                </div>
+                <button class="btn" onclick="createNewArticle()">+ 新建文章</button>
+                <button class="btn btn-secondary" onclick="importFromRepository()" style="margin-top: 10px;">
+                    📥 从仓库导入
+                </button>
+            </div>
+            <div class="article-list" id="article-list">
+                <!-- 文章列表将在这里显示 -->
+            </div>
+            <div class="batch-actions" id="batch-actions">
+                <div class="batch-actions-info">
+                    已选择 <span id="selected-count">0</span> 篇文章
+                </div>
+                <div class="batch-actions-buttons">
+                    <button class="btn btn-secondary" onclick="selectAllArticles()">全选</button>
+                    <button class="btn btn-secondary" onclick="deselectAllArticles()">取消</button>
+                    <button class="btn btn-danger" onclick="deleteSelectedArticles()">🗑️ 删除</button>
+                </div>
+            </div>
+            <div style="padding: 15px; border-top: 1px solid #e0e0e0;">
+                <button class="btn btn-success" onclick="generateAllHTML()">📦 生成所有 HTML</button>
+                <button class="btn btn-secondary" onclick="exportIndexJSON()" style="margin-top: 10px;">📄 导出 index.json</button>
+            </div>
+        </div>
+
+        <!-- 中间编辑区 -->
+        <div class="editor-area">
+            <div class="editor-header">
+                <div class="editor-title" id="editor-title">选择或创建一篇文章</div>
+                <div class="editor-actions">
+                    <button class="btn btn-secondary" onclick="togglePreview()">👁️ 预览</button>
+                    <button class="btn" onclick="saveCurrentArticle()">💾 保存</button>
+                    <button class="btn btn-success" onclick="generateCurrentHTML()">📄 生成 HTML</button>
+                </div>
+            </div>
+
+            <div class="editor-content" id="editor-content">
+                <div class="empty-state">
+                    <div class="icon">📝</div>
+                    <p>选择一篇文章开始编辑，或创建新文章</p>
+                </div>
+            </div>
+
+            <div class="status-bar">
+                <span id="status-text">就绪</span>
+                <span id="article-count">共 0 篇文章</span>
+            </div>
+        </div>
+
+        <!-- 右侧预览区 -->
+        <div class="preview-area" id="preview-area">
+            <div class="preview-header">
+                <h2>📱 实时预览</h2>
+            </div>
+            <div class="preview-content" id="preview-content">
+                <div class="empty-state">
+                    <div class="icon">👀</div>
+                    <p>开始编辑以查看预览</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quill 编辑器 -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.6/dist/quill.js"></script>
+    
+    <script>
+        // 全局变量
+        let articles = [];
+        let currentArticle = null;
+        let quillEditor = null;
+        let autoSaveTimer = null;
+        let batchMode = false;
+        let selectedArticles = new Set();
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadArticles();
+            renderArticleList();
+        });
+
+        // 加载文章
+        function loadArticles() {
+            const saved = localStorage.getItem('articles');
+            articles = saved ? JSON.parse(saved) : [];
+            updateArticleCount();
+        }
+
+        // 保存文章到 localStorage
+        function saveArticles() {
+            localStorage.setItem('articles', JSON.stringify(articles));
+            updateArticleCount();
+        }
+
+        // 渲染文章列表
+        function renderArticleList() {
+            const listEl = document.getElementById('article-list');
+            
+            if (articles.length === 0) {
+                listEl.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>还没有文章</p></div>';
+                return;
+            }
+
+            listEl.className = 'article-list' + (batchMode ? ' batch-mode' : '');
+
+            listEl.innerHTML = articles.map((article, index) => {
+                const isSelected = selectedArticles.has(article.id);
+                const isActive = currentArticle && currentArticle.id === article.id;
+                
+                return `
+                    <div class="article-item ${isActive ? 'active' : ''} ${isSelected ? 'selected' : ''}" 
+                         onclick="handleArticleClick(${index}, event)">
+                        <input type="checkbox" class="article-checkbox" 
+                               ${isSelected ? 'checked' : ''}
+                               onclick="toggleArticleSelection(${index}, event)">
+                        <div class="article-info">
+                            <h3>${article.title || '无标题'}</h3>
+                            <div class="meta">
+                                <span class="category">${article.category || '未分类'}</span>
+                                <span>${article.date || ''}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            updateSelectedCount();
+        }
+
+        // 创建新文章
+        function createNewArticle() {
+            const newArticle = {
+                id: Date.now(),
+                title: '',
+                category: '',
+                author: '博主',
+                date: new Date().toLocaleDateString('zh-CN').replace(/\//g, '-'),
+                excerpt: '',
+                coverImage: '',
+                content: '',
+                visibility: 'public'
+            };
+
+            articles.unshift(newArticle);
+            saveArticles();
+            renderArticleList();
+            loadArticle(0);
+        }
+
+        // 加载文章到编辑器
+        function loadArticle(index) {
+            currentArticle = articles[index];
+            
+            // 显示编辑表单
+            const editorContent = document.getElementById('editor-content');
+            editorContent.innerHTML = `
+                <div class="form-group">
+                    <label>文章标题 *</label>
+                    <input type="text" id="input-title" value="${currentArticle.title}" 
+                           placeholder="输入文章标题" oninput="updatePreview()">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>分类 *</label>
+                        <input type="text" id="input-category" value="${currentArticle.category}" 
+                               placeholder="技术/教程/随笔" oninput="updatePreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>作者</label>
+                        <input type="text" id="input-author" value="${currentArticle.author}" 
+                               placeholder="作者名称" oninput="updatePreview()">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>日期</label>
+                        <input type="text" id="input-date" value="${currentArticle.date}" 
+                               placeholder="YYYY-MM-DD">
+                    </div>
+                    <div class="form-group">
+                        <label>可见性</label>
+                        <select id="input-visibility">
+                            <option value="public" ${currentArticle.visibility === 'public' ? 'selected' : ''}>公开</option>
+                            <option value="private" ${currentArticle.visibility === 'private' ? 'selected' : ''}>私密</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>摘要 *</label>
+                    <textarea id="input-excerpt" rows="2" placeholder="文章摘要">${currentArticle.excerpt}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>封面图片</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button type="button" class="btn" style="flex: 1;" onclick="document.getElementById('cover-file-input').click()">
+                            📁 上传本地图片
+                        </button>
+                        <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="inputCoverURL()">
+                            🔗 输入 URL
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="clearCoverImage()">
+                            ✕ 清除
+                        </button>
+                    </div>
+                    <input type="file" id="cover-file-input" accept="image/*" style="display: none;" onchange="handleCoverUpload(event)">
+                    <input type="text" id="input-cover" value="${currentArticle.coverImage}" 
+                           placeholder="图片 URL 或 Base64" style="display: none;">
+                    <div id="cover-preview" style="display: ${currentArticle.coverImage ? 'block' : 'none'}; margin-top: 10px;">
+                        <img src="${currentArticle.coverImage}" alt="封面预览" style="max-width: 100%; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>文章内容 *</label>
+                    <div id="editor-container"></div>
+                </div>
+            `;
+
+            // 初始化 Quill 编辑器
+            initQuillEditor();
+            
+            // 更新标题
+            document.getElementById('editor-title').textContent = currentArticle.title || '编辑文章';
+            
+            // 更新预览
+            updatePreview();
+            
+            // 重新渲染列表（更新选中状态）
+            renderArticleList();
+        }
+
+        // 初始化 Quill 编辑器
+        function initQuillEditor() {
+            quillEditor = new Quill('#editor-container', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'color': [] }, { 'background': [] }],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['blockquote', 'code-block'],
+                        ['link', 'image'],
+                        ['clean']
+                    ]
+                },
+                placeholder: '开始编写文章内容...'
+            });
+
+            // 加载内容
+            if (currentArticle.content) {
+                quillEditor.root.innerHTML = currentArticle.content;
+            }
+
+            // 监听变化
+            quillEditor.on('text-change', () => {
+                updatePreview();
+                scheduleAutoSave();
+            });
+        }
+
+        // 更新预览
+        function updatePreview() {
+            if (!currentArticle) return;
+
+            const title = document.getElementById('input-title')?.value || '';
+            const category = document.getElementById('input-category')?.value || '';
+            const author = document.getElementById('input-author')?.value || '';
+            const date = document.getElementById('input-date')?.value || '';
+            const coverImage = document.getElementById('input-cover')?.value || '';
+            const content = quillEditor ? quillEditor.root.innerHTML : '';
+
+            const coverHTML = coverImage 
+                ? '<img src="' + coverImage + '" alt="封面" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">'
+                : '';
+
+            const previewContent = document.getElementById('preview-content');
+            previewContent.innerHTML = `
+                <div class="preview-article">
+                    <h1>${title || '无标题'}</h1>
+                    <div class="meta">
+                        📅 ${date} | ✍️ ${author} | 📁 ${category}
+                    </div>
+                    ${coverHTML}
+                    <div class="content">
+                        ${content || '<p style="color: #999;">开始编写内容...</p>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 自动保存
+        function scheduleAutoSave() {
+            clearTimeout(autoSaveTimer);
+            updateStatus('未保存', 'unsaved');
+            
+            autoSaveTimer = setTimeout(() => {
+                saveCurrentArticle(true);
+            }, 2000);
+        }
+
+        // 保存当前文章
+        function saveCurrentArticle(isAutoSave = false) {
+            if (!currentArticle) return;
+
+            currentArticle.title = document.getElementById('input-title').value;
+            currentArticle.category = document.getElementById('input-category').value;
+            currentArticle.author = document.getElementById('input-author').value;
+            currentArticle.date = document.getElementById('input-date').value;
+            currentArticle.excerpt = document.getElementById('input-excerpt').value;
+            currentArticle.coverImage = document.getElementById('input-cover').value;
+            currentArticle.visibility = document.getElementById('input-visibility').value;
+            currentArticle.content = quillEditor ? quillEditor.root.innerHTML : '';
+
+            saveArticles();
+            renderArticleList();
+            
+            if (!isAutoSave) {
+                updateStatus('已保存', 'saved');
+                setTimeout(() => updateStatus('就绪'), 2000);
+            } else {
+                updateStatus('自动保存', 'saved');
+            }
+        }
+
+        // 生成文件名
+        function generateFilename(title) {
+            return title
+                .toLowerCase()
+                .replace(/[^\w\u4e00-\u9fa5]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .substring(0, 50) + '.html';
+        }
+
+        // 生成单篇文章 HTML
+        function generateArticleHTML(article) {
+            const category = article.category || '未分类';
+            const filename = generateFilename(article.title);
+            const coverImageHTML = article.coverImage 
+                ? '<img src="' + article.coverImage + '" alt="' + article.title + '" class="post-cover">' 
+                : '';
+            
+            const html = '<!DOCTYPE html>\n' +
+'<html lang="zh-CN">\n' +
+'<head>\n' +
+'    <meta charset="UTF-8">\n' +
+'    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+'    <title>' + article.title + ' - 我的个人博客</title>\n' +
+'    <link rel="stylesheet" href="../../css/style.css">\n' +
+'    <meta name="description" content="' + article.excerpt + '">\n' +
+'    <meta name="keywords" content="' + category + ', ' + article.title + '">\n' +
+'</head>\n' +
+'<body>\n' +
+'    <header>\n' +
+'        <nav class="container">\n' +
+'            <h1 class="logo">我的博客</h1>\n' +
+'            <ul class="nav-links">\n' +
+'                <li><a href="../../index.html">首页</a></li>\n' +
+'                <li><a href="../../about.html">关于</a></li>\n' +
+'            </ul>\n' +
+'        </nav>\n' +
+'    </header>\n' +
+'\n' +
+'    <main class="container">\n' +
+'        <article class="post-detail">\n' +
+'            <header class="post-header">\n' +
+'                <h1>' + article.title + '</h1>\n' +
+'                <div class="post-meta">\n' +
+'                    <span>📅 ' + article.date + '</span>\n' +
+'                    <span>✍️ ' + article.author + '</span>\n' +
+'                    <span>📁 ' + category + '</span>\n' +
+'                </div>\n' +
+'            </header>\n' +
+'            ' + coverImageHTML + '\n' +
+'            <div class="post-content">\n' +
+'                ' + article.content + '\n' +
+'            </div>\n' +
+'        </article>\n' +
+'        \n' +
+'        <div class="post-navigation">\n' +
+'            <a href="../../index.html" class="back-link">← 返回首页</a>\n' +
+'        </div>\n' +
+'    </main>\n' +
+'\n' +
+'    <footer>\n' +
+'        <div class="container">\n' +
+'            <p>&copy; 2025 我的博客. 保留所有权利.</p>\n' +
+'        </div>\n' +
+'    </footer>\n' +
+'\n' +
+'    <script src="../../js/bing-wallpaper.js"><\/script>\n' +
+'    <script>\n' +
+'        document.addEventListener(\'DOMContentLoaded\', async () => {\n' +
+'            await applyBingWallpaperToBody({\n' +
+'                overlay: true,\n' +
+'                overlayColor: \'rgba(255, 255, 255, 0.1)\'\n' +
+'            });\n' +
+'            document.body.classList.add(\'has-wallpaper\');\n' +
+'        });\n' +
+'    <\/script>\n' +
+'</body>\n' +
+'</html>';
+            
+            return { html, filename, category };
+        }
+
+        // 生成当前文章 HTML
+        function generateCurrentHTML() {
+            if (!currentArticle) {
+                alert('请先选择一篇文章');
+                return;
+            }
+
+            saveCurrentArticle();
+            
+            const { html, filename, category } = generateArticleHTML(currentArticle);
+            
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = category + '-' + filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            updateStatus('HTML 已生成：' + filename, 'saved');
+        }
+
+        // 生成所有文章 HTML
+        function generateAllHTML() {
+            if (articles.length === 0) {
+                alert('没有文章可生成');
+                return;
+            }
+
+            if (!confirm(`确定要生成 ${articles.length} 篇文章的 HTML 文件吗？`)) {
+                return;
+            }
+
+            updateStatus('正在生成...', 'unsaved');
+
+            articles.forEach((article, index) => {
+                setTimeout(() => {
+                    const { html, filename, category } = generateArticleHTML(article);
+                    
+                    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = category + '-' + filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    if (index === articles.length - 1) {
+                        updateStatus('所有文章已生成', 'saved');
+                    }
+                }, index * 500);
+            });
+        }
+
+        // 导出 index.json
+        function exportIndexJSON() {
+            if (articles.length === 0) {
+                alert('没有文章可导出');
+                return;
+            }
+
+            const indexData = {
+                posts: articles.map(article => {
+                    const category = article.category || '未分类';
+                    const filename = generateFilename(article.title);
+                    
+                    return {
+                        id: article.id,
+                        title: article.title,
+                        date: article.date,
+                        author: article.author,
+                        category: category,
+                        excerpt: article.excerpt,
+                        coverImage: article.coverImage || '',
+                        url: 'posts/' + category + '/' + filename,
+                        visibility: article.visibility || 'public'
+                    };
+                })
+            };
+
+            const json = JSON.stringify(indexData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            updateStatus('index.json 已导出', 'saved');
+        }
+
+        // 切换预览
+        function togglePreview() {
+            const previewArea = document.getElementById('preview-area');
+            previewArea.style.display = previewArea.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        // 更新状态
+        function updateStatus(text, type = '') {
+            const statusEl = document.getElementById('status-text');
+            statusEl.textContent = text;
+            statusEl.className = type ? 'status-' + type : '';
+        }
+
+        // 更新文章计数
+        function updateArticleCount() {
+            document.getElementById('article-count').textContent = '共 ' + articles.length + ' 篇文章';
+        }
+
+        // 处理封面图片上传
+        function handleCoverUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件！');
+                return;
+            }
+
+            // 检查文件大小（限制 5MB）
+            if (file.size > 5 * 1024 * 1024) {
+                alert('图片大小不能超过 5MB！建议使用图床服务。');
+                return;
+            }
+
+            // 显示警告（如果图片较大）
+            if (file.size > 500 * 1024) {
+                if (!confirm('图片大小超过 500KB，建议压缩后上传或使用图床服务。\n\n大图片会导致：\n- 文件体积大\n- 加载速度慢\n- 占用存储空间\n\n是否继续？')) {
+                    event.target.value = '';
+                    return;
+                }
+            }
+
+            // 读取文件并转换为 Base64
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result;
+                document.getElementById('input-cover').value = base64;
+                showCoverPreview(base64);
+                updatePreview();
+                scheduleAutoSave();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 输入封面 URL
+        function inputCoverURL() {
+            const url = prompt('请输入图片 URL:', 'https://');
+            if (url && url !== 'https://') {
+                document.getElementById('input-cover').value = url;
+                showCoverPreview(url);
+                updatePreview();
+                scheduleAutoSave();
+            }
+        }
+
+        // 显示封面预览
+        function showCoverPreview(imageUrl) {
+            const preview = document.getElementById('cover-preview');
+            if (imageUrl) {
+                preview.innerHTML = '<img src="' + imageUrl + '" alt="封面预览" style="max-width: 100%; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
+                preview.style.display = 'block';
+            } else {
+                preview.innerHTML = '';
+                preview.style.display = 'none';
+            }
+        }
+
+        // 清除封面图片
+        function clearCoverImage() {
+            document.getElementById('input-cover').value = '';
+            document.getElementById('cover-file-input').value = '';
+            showCoverPreview('');
+            updatePreview();
+            scheduleAutoSave();
+        }
+
+        // 切换批量模式
+        function toggleBatchMode() {
+            batchMode = !batchMode;
+            document.getElementById('batch-mode-checkbox').checked = batchMode;
+            document.getElementById('batch-actions').classList.toggle('active', batchMode);
+            
+            if (!batchMode) {
+                selectedArticles.clear();
+            }
+            
+            renderArticleList();
+        }
+
+        // 处理文章点击
+        function handleArticleClick(index, event) {
+            if (batchMode) {
+                toggleArticleSelection(index, event);
+            } else {
+                loadArticle(index);
+            }
+        }
+
+        // 切换文章选择状态
+        function toggleArticleSelection(index, event) {
+            event.stopPropagation();
+            
+            const article = articles[index];
+            if (selectedArticles.has(article.id)) {
+                selectedArticles.delete(article.id);
+            } else {
+                selectedArticles.add(article.id);
+            }
+            
+            renderArticleList();
+        }
+
+        // 全选文章
+        function selectAllArticles() {
+            articles.forEach(article => {
+                selectedArticles.add(article.id);
+            });
+            renderArticleList();
+        }
+
+        // 取消全选
+        function deselectAllArticles() {
+            selectedArticles.clear();
+            renderArticleList();
+        }
+
+        // 删除选中的文章
+        function deleteSelectedArticles() {
+            if (selectedArticles.size === 0) {
+                alert('请先选择要删除的文章');
+                return;
+            }
+
+            if (!confirm(`确定要删除选中的 ${selectedArticles.size} 篇文章吗？\n\n此操作不可恢复！`)) {
+                return;
+            }
+
+            // 删除选中的文章
+            articles = articles.filter(article => !selectedArticles.has(article.id));
+            
+            // 如果当前编辑的文章被删除，清空编辑器
+            if (currentArticle && selectedArticles.has(currentArticle.id)) {
+                currentArticle = null;
+                const editorContent = document.getElementById('editor-content');
+                editorContent.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📝</div>
+                        <p>选择一篇文章开始编辑，或创建新文章</p>
+                    </div>
+                `;
+                document.getElementById('editor-title').textContent = '选择或创建一篇文章';
+            }
+
+            selectedArticles.clear();
+            saveArticles();
+            renderArticleList();
+            
+            updateStatus(`已删除 ${selectedArticles.size} 篇文章`, 'saved');
+        }
+
+        // 更新选中计数
+        function updateSelectedCount() {
+            document.getElementById('selected-count').textContent = selectedArticles.size;
+        }
+
+        // 从仓库导入文章
+        async function importFromRepository() {
+            try {
+                updateStatus('正在从仓库读取文章...', 'unsaved');
+                
+                // 读取 posts/index.json
+                const response = await fetch('posts/index.json');
+                if (!response.ok) {
+                    throw new Error('无法读取 posts/index.json');
+                }
+                
+                const data = await response.json();
+                const posts = data.posts || [];
+                
+                if (posts.length === 0) {
+                    alert('仓库中没有找到文章');
+                    updateStatus('就绪');
+                    return;
+                }
+                
+                // 显示导入对话框
+                showImportDialog(posts);
+                
+            } catch (error) {
+                console.error('导入失败:', error);
+                alert('从仓库导入失败：' + error.message + '\n\n请确保：\n1. posts/index.json 文件存在\n2. 文件格式正确\n3. 在 Web 服务器环境下运行');
+                updateStatus('导入失败', 'unsaved');
+            }
+        }
+
+        // 显示导入对话框
+        function showImportDialog(posts) {
+            // 创建模态框
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+            
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                background: white;
+                border-radius: 8px;
+                padding: 30px;
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            `;
+            
+            dialog.innerHTML = `
+                <h2 style="margin-bottom: 20px; color: #333;">📥 从仓库导入文章</h2>
+                <p style="color: #666; margin-bottom: 20px;">
+                    找到 ${posts.length} 篇文章。选择要导入的文章：
+                </p>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                        <input type="checkbox" id="select-all-import" onchange="toggleAllImport(this)">
+                        <span style="font-weight: 500;">全选 / 取消全选</span>
+                    </label>
+                </div>
+                <div id="import-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
+                    ${posts.map((post, index) => `
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; margin-bottom: 8px; background: #f8f9fa; border-radius: 4px; cursor: pointer; transition: all 0.3s;">
+                            <input type="checkbox" class="import-checkbox" data-index="${index}" checked>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 500; color: #333; margin-bottom: 4px;">${post.title}</div>
+                                <div style="font-size: 12px; color: #999;">
+                                    <span style="background: #667eea; color: white; padding: 2px 8px; border-radius: 3px; margin-right: 8px;">${post.category}</span>
+                                    <span>${post.date}</span>
+                                </div>
+                            </div>
+                        </label>
+                    `).join('')}
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="confirmImport()" style="flex: 1;">
+                        ✅ 导入选中的文章
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeImportDialog()" style="flex: 1;">
+                        ❌ 取消
+                    </button>
+                </div>
+            `;
+            
+            modal.appendChild(dialog);
+            document.body.appendChild(modal);
+            
+            // 保存数据到全局变量
+            window.importPosts = posts;
+            window.importModal = modal;
+        }
+
+        // 切换全选
+        function toggleAllImport(checkbox) {
+            const checkboxes = document.querySelectorAll('.import-checkbox');
+            checkboxes.forEach(cb => cb.checked = checkbox.checked);
+        }
+
+        // 确认导入
+        async function confirmImport() {
+            const checkboxes = document.querySelectorAll('.import-checkbox:checked');
+            const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+            
+            if (selectedIndices.length === 0) {
+                alert('请至少选择一篇文章');
+                return;
+            }
+            
+            updateStatus('正在导入文章...', 'unsaved');
+            
+            let successCount = 0;
+            let failCount = 0;
+            
+            for (const index of selectedIndices) {
+                const post = window.importPosts[index];
+                
+                try {
+                    // 读取文章 HTML 内容
+                    const response = await fetch(post.url);
+                    if (!response.ok) {
+                        throw new Error('无法读取文章文件');
+                    }
+                    
+                    const html = await response.text();
+                    
+                    // 解析 HTML 提取内容
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const contentEl = doc.querySelector('.post-content');
+                    const content = contentEl ? contentEl.innerHTML : '';
+                    
+                    // 检查是否已存在
+                    const exists = articles.some(a => a.id === post.id);
+                    
+                    if (exists) {
+                        // 更新现有文章
+                        const existingIndex = articles.findIndex(a => a.id === post.id);
+                        articles[existingIndex] = {
+                            id: post.id,
+                            title: post.title,
+                            category: post.category,
+                            author: post.author,
+                            date: post.date,
+                            excerpt: post.excerpt,
+                            coverImage: post.coverImage,
+                            content: content,
+                            visibility: post.visibility || 'public'
+                        };
+                    } else {
+                        // 添加新文章
+                        articles.push({
+                            id: post.id,
+                            title: post.title,
+                            category: post.category,
+                            author: post.author,
+                            date: post.date,
+                            excerpt: post.excerpt,
+                            coverImage: post.coverImage,
+                            content: content,
+                            visibility: post.visibility || 'public'
+                        });
+                    }
+                    
+                    successCount++;
+                    
+                } catch (error) {
+                    console.error('导入文章失败:', post.title, error);
+                    failCount++;
+                }
+            }
+            
+            // 保存并更新
+            saveArticles();
+            renderArticleList();
+            closeImportDialog();
+            
+            // 显示结果
+            const message = `导入完成！\n\n成功：${successCount} 篇\n失败：${failCount} 篇`;
+            alert(message);
+            updateStatus(`已导入 ${successCount} 篇文章`, 'saved');
+        }
+
+        // 关闭导入对话框
+        function closeImportDialog() {
+            if (window.importModal) {
+                document.body.removeChild(window.importModal);
+                window.importModal = null;
+                window.importPosts = null;
+            }
+            updateStatus('就绪');
+        }
+    </script>
+</body>
+</html>

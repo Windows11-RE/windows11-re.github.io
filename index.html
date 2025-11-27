@@ -44,9 +44,8 @@
     </footer>
 
     <script src="js/auth.js"></script>
-    <script src="js/categories.js"></script>
+    <script src="js/static-loader.js"></script>
     <script src="js/bing-wallpaper.js"></script>
-    <script src="js/main.js"></script>
     <script>
         // 根据登录状态更新导航栏
         document.addEventListener('DOMContentLoaded', async () => {
@@ -58,7 +57,21 @@
             }
             
             // 动态加载分类筛选器
-            loadCategoryFilters();
+            const posts = await loadPostsFromJSON();
+            const categories = [...new Set(posts.map(p => p.category).filter(Boolean))];
+            const filterContainer = document.querySelector('.category-filter');
+            
+            if (filterContainer && categories.length > 0) {
+                filterContainer.innerHTML = '<button class="filter-btn active" data-category="all">全部</button>';
+                categories.forEach(category => {
+                    const btn = document.createElement('button');
+                    btn.className = 'filter-btn';
+                    btn.dataset.category = category;
+                    btn.textContent = category;
+                    filterContainer.appendChild(btn);
+                });
+                setupStaticCategoryFilter();
+            }
             
             // 应用必应每日一图背景
             await applyBingWallpaperToBody({
@@ -67,28 +80,6 @@
             });
             document.body.classList.add('has-wallpaper');
         });
-        
-        // 动态加载分类筛选器
-        function loadCategoryFilters() {
-            const categories = getCategories();
-            const filterContainer = document.querySelector('.category-filter');
-            
-            if (!filterContainer) return;
-            
-            // 保留"全部"按钮，添加动态分类
-            filterContainer.innerHTML = '<button class="filter-btn active" data-category="all">全部</button>';
-            
-            categories.forEach(category => {
-                const btn = document.createElement('button');
-                btn.className = 'filter-btn';
-                btn.dataset.category = category;
-                btn.textContent = category;
-                filterContainer.appendChild(btn);
-            });
-            
-            // 重新绑定事件
-            setupCategoryFilter();
-        }
     </script>
 </body>
 </html>

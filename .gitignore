@@ -1,24 +1,68 @@
-# IDE 和编辑器
+# 测试和诊断文件
+test-*.html
+*-test.html
+*-diagnostic.html
+editor-simple.html
+
+# 生成工具（仅本地使用）
+generate-static-posts.html
+init-pretty-urls.html
+
+# 备份文件
+*.original.js
+*.obfuscated.js
+*.backup.*
+
+# 临时文件
+posts/post-*.html
+*.tmp
+*.temp
+
+# 编辑器和 IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# 操作系统
+# 系统文件
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # 日志文件
 *.log
+npm-debug.log*
 
-# 临时文件
-*.tmp
-*.temp
-
-# Node modules (如果将来使用)
+# 依赖目录（如果使用 npm）
 node_modules/
 
-# 构建输出 (如果将来使用)
+# 构建输出
 dist/
 build/
+
+# 环境变量
+.env
+.env.local
+
+# 个人笔记和草稿
+NOTES.md
+DRAFT.md
+TODO.md
+
+# 旧系统文件（已废弃）
+post.html
+js/main.js
+js/post.js
+js/categories.js
+js/post-generator.js
+js/post-loader.js
+posts/posts.json
+post/
+
+# 旧文档（已过时）
+PRETTY_URL_*.md
+AUTH_OBFUSCATION_GUIDE.md
+OBFUSCATION_SUMMARY.md
+EDITOR_TROUBLESHOOTING.md
+QUICK_TEST.md
