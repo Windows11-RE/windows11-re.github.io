@@ -26,10 +26,7 @@
         <!-- 分类筛选 -->
         <div class="category-filter">
             <button class="filter-btn active" data-category="all">全部</button>
-            <button class="filter-btn" data-category="技术">技术</button>
-            <button class="filter-btn" data-category="生活">生活</button>
-            <button class="filter-btn" data-category="随笔">随笔</button>
-            <button class="filter-btn" data-category="教程">教程</button>
+            <!-- 分类将从 posts/index.json 动态加载 -->
         </div>
 
         <section class="posts" id="posts-container">
@@ -43,34 +40,44 @@
         </div>
     </footer>
 
-    <script src="js/auth.js"></script>
     <script src="js/static-loader.js"></script>
     <script src="js/bing-wallpaper.js"></script>
     <script>
-        // 根据登录状态更新导航栏
+        // 页面初始化
         document.addEventListener('DOMContentLoaded', async () => {
-            const navLinks = document.getElementById('nav-links');
-            if (isAuthenticated()) {
-                navLinks.innerHTML += `
-                    <li><a href="admin.html">后台</a></li>
-                `;
-            }
-            
             // 动态加载分类筛选器
-            const posts = await loadPostsFromJSON();
-            const categories = [...new Set(posts.map(p => p.category).filter(Boolean))];
-            const filterContainer = document.querySelector('.category-filter');
-            
-            if (filterContainer && categories.length > 0) {
-                filterContainer.innerHTML = '<button class="filter-btn active" data-category="all">全部</button>';
-                categories.forEach(category => {
-                    const btn = document.createElement('button');
-                    btn.className = 'filter-btn';
-                    btn.dataset.category = category;
-                    btn.textContent = category;
-                    filterContainer.appendChild(btn);
-                });
-                setupStaticCategoryFilter();
+            try {
+                const posts = await loadPostsFromJSON();
+                
+                // 从文章中提取所有唯一的分类
+                const categories = [...new Set(posts.map(p => p.category).filter(Boolean))];
+                
+                // 按字母顺序排序（可选）
+                categories.sort((a, b) => a.localeCompare(b, 'zh-CN'));
+                
+                const filterContainer = document.querySelector('.category-filter');
+                
+                if (filterContainer) {
+                    // 保留"全部"按钮
+                    filterContainer.innerHTML = '<button class="filter-btn active" data-category="all">全部</button>';
+                    
+                    // 添加动态分类按钮
+                    if (categories.length > 0) {
+                        categories.forEach(category => {
+                            const btn = document.createElement('button');
+                            btn.className = 'filter-btn';
+                            btn.dataset.category = category;
+                            btn.textContent = category;
+                            filterContainer.appendChild(btn);
+                        });
+                    }
+                    
+                    // 设置分类筛选事件
+                    setupStaticCategoryFilter();
+                }
+            } catch (error) {
+                console.error('加载分类失败:', error);
+                // 如果加载失败，保持默认的"全部"按钮
             }
             
             // 应用必应每日一图背景

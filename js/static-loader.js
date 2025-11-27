@@ -1,17 +1,7 @@
 // 静态文章加载器 - 从 GitHub 仓库读取真实的 HTML 文件
 // 不再依赖 localStorage
 
-// 检查是否已登录
-function isAuthenticated() {
-    const auth = localStorage.getItem('blogAuth');
-    if (!auth) return false;
-    try {
-        const authData = JSON.parse(auth);
-        return authData.isAuthenticated === true;
-    } catch (e) {
-        return false;
-    }
-}
+// 注：已移除认证功能，所有文章默认公开显示
 
 // 从 posts/index.json 加载文章列表
 async function loadPostsFromJSON() {
@@ -51,10 +41,8 @@ async function loadStaticPosts(category = 'all') {
         ? allPosts 
         : allPosts.filter(p => p.category === category);
     
-    // 过滤私密文章（如果未登录）
-    const publicPosts = isAuthenticated() 
-        ? filteredPosts 
-        : filteredPosts.filter(p => p.visibility !== 'private');
+    // 过滤私密文章（只显示公开文章）
+    const publicPosts = filteredPosts.filter(p => p.visibility !== 'private');
     
     if (publicPosts.length === 0) {
         postsContainer.innerHTML = '<p class="empty-message">暂无文章</p>';
