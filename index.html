@@ -45,14 +45,22 @@
     <script>
         // 页面初始化
         document.addEventListener('DOMContentLoaded', async () => {
-            // 动态加载分类筛选器
+            console.log('页面加载完成，开始初始化...');
+            
+            // 1. 加载文章列表
+            await loadStaticPosts();
+            console.log('文章列表加载完成');
+            
+            // 2. 动态加载分类筛选器
             try {
                 const posts = await loadPostsFromJSON();
+                console.log('读取到文章数量:', posts.length);
                 
                 // 从文章中提取所有唯一的分类
                 const categories = [...new Set(posts.map(p => p.category).filter(Boolean))];
+                console.log('提取到的分类:', categories);
                 
-                // 按字母顺序排序（可选）
+                // 按字母顺序排序
                 categories.sort((a, b) => a.localeCompare(b, 'zh-CN'));
                 
                 const filterContainer = document.querySelector('.category-filter');
@@ -70,22 +78,28 @@
                             btn.textContent = category;
                             filterContainer.appendChild(btn);
                         });
+                        console.log('分类按钮已添加');
                     }
                     
                     // 设置分类筛选事件
                     setupStaticCategoryFilter();
+                    console.log('分类筛选事件已绑定');
                 }
             } catch (error) {
                 console.error('加载分类失败:', error);
-                // 如果加载失败，保持默认的"全部"按钮
             }
             
-            // 应用必应每日一图背景
-            await applyBingWallpaperToBody({
-                overlay: true,
-                overlayColor: 'rgba(255, 255, 255, 0.1)'
-            });
-            document.body.classList.add('has-wallpaper');
+            // 3. 应用必应每日一图背景
+            try {
+                await applyBingWallpaperToBody({
+                    overlay: true,
+                    overlayColor: 'rgba(255, 255, 255, 0.1)'
+                });
+                document.body.classList.add('has-wallpaper');
+                console.log('背景图片已应用');
+            } catch (error) {
+                console.error('背景图片加载失败:', error);
+            }
         });
     </script>
 </body>

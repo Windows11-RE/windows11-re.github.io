@@ -85,10 +85,5 @@ function setupStaticCategoryFilter() {
     });
 }
 
-// 页面加载完成后执行
-if (document.getElementById('posts-container')) {
-    document.addEventListener('DOMContentLoaded', () => {
-        loadStaticPosts();
-        setupStaticCategoryFilter();
-    });
-}
+// 注意：不在这里添加 DOMContentLoaded 事件
+// 因为 index.html 中已经有了，会在那里调用 loadStaticPosts()
