@@ -1,15 +1,15 @@
 {
-  "posts": [],
-  "_comment": "这是文章索引文件。使用 generate-static-posts.html 生成。",
-  "_example": {
-    "id": 1732012345678,
-    "title": "文章标题",
-    "date": "2025-11-22",
-    "author": "博主",
-    "category": "技术",
-    "excerpt": "文章摘要",
-    "coverImage": "https://example.com/cover.jpg",
-    "url": "posts/技术/article-name.html",
-    "visibility": "public"
-  }
+  "posts": [
+    {
+      "id": 1764247416743,
+      "title": "我的个人网站做好了，欢迎大家前来浏览！",
+      "date": "2025-11-27",
+      "author": "SYSTEM_Win11_RE",
+      "category": "随笔",
+      "excerpt": "本网站仅供学习交流，欢迎大家前来浏览",
+      "coverImage": "",
+      "url": "posts/随笔/welcome.html",
+      "visibility": "public"
+    }
+  ]
 }
