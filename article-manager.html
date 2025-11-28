@@ -530,6 +530,9 @@
             <div class="status-bar">
                 <span id="status-text">就绪</span>
                 <span id="article-count">共 0 篇文章</span>
+                <button onclick="testSave()" style="padding: 5px 10px; background: #3498db; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">
+                    🧪 测试保存
+                </button>
             </div>
         </div>
 
@@ -643,19 +646,19 @@
                 <div class="form-group">
                     <label>文章标题 *</label>
                     <input type="text" id="input-title" value="${currentArticle.title}" 
-                           placeholder="输入文章标题" oninput="updatePreview()">
+                           placeholder="输入文章标题" oninput="handleInputChange()">
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>分类 *</label>
                         <input type="text" id="input-category" value="${currentArticle.category}" 
-                               placeholder="技术/教程/随笔" oninput="updatePreview()">
+                               placeholder="技术/教程/随笔" oninput="handleInputChange()">
                     </div>
                     <div class="form-group">
                         <label>作者</label>
                         <input type="text" id="input-author" value="${currentArticle.author}" 
-                               placeholder="作者名称" oninput="updatePreview()">
+                               placeholder="作者名称" oninput="handleInputChange()">
                     </div>
                 </div>
 
@@ -676,7 +679,7 @@
 
                 <div class="form-group">
                     <label>摘要 *</label>
-                    <textarea id="input-excerpt" rows="2" placeholder="文章摘要">${currentArticle.excerpt}</textarea>
+                    <textarea id="input-excerpt" rows="2" placeholder="文章摘要" oninput="handleInputChange()">${currentArticle.excerpt}</textarea>
                 </div>
 
                 <div class="form-group">
@@ -779,37 +782,82 @@
             `;
         }
 
+        // 处理输入变化
+        function handleInputChange() {
+            updatePreview();
+            scheduleAutoSave();
+        }
+
         // 自动保存
         function scheduleAutoSave() {
             clearTimeout(autoSaveTimer);
-            updateStatus('未保存', 'unsaved');
+            updateStatus('✏️ 编辑中...', 'unsaved');
             
             autoSaveTimer = setTimeout(() => {
+                console.log('触发自动保存');
                 saveCurrentArticle(true);
             }, 2000);
         }
 
         // 保存当前文章
         function saveCurrentArticle(isAutoSave = false) {
-            if (!currentArticle) return;
+            if (!currentArticle) {
+                console.warn('没有选中的文章，无法保存');
+                alert('请先选择或创建一篇文章');
+                return;
+            }
 
-            currentArticle.title = document.getElementById('input-title').value;
-            currentArticle.category = document.getElementById('input-category').value;
-            currentArticle.author = document.getElementById('input-author').value;
-            currentArticle.date = document.getElementById('input-date').value;
-            currentArticle.excerpt = document.getElementById('input-excerpt').value;
-            currentArticle.coverImage = document.getElementById('input-cover').value;
-            currentArticle.visibility = document.getElementById('input-visibility').value;
-            currentArticle.content = quillEditor ? quillEditor.root.innerHTML : '';
-
-            saveArticles();
-            renderArticleList();
-            
-            if (!isAutoSave) {
-                updateStatus('已保存', 'saved');
-                setTimeout(() => updateStatus('就绪'), 2000);
-            } else {
-                updateStatus('自动保存', 'saved');
+            try {
+                console.log('开始保存文章:', currentArticle.id);
+                
+                // 获取表单数据
+                const titleEl = document.getElementById('input-title');
+                const categoryEl = document.getElementById('input-category');
+                const authorEl = document.getElementById('input-author');
+                const dateEl = document.getElementById('input-date');
+                const excerptEl = document.getElementById('input-excerpt');
+                const coverEl = document.getElementById('input-cover');
+                const visibilityEl = document.getElementById('input-visibility');
+                
+                // 检查必需元素是否存在
+                if (!titleEl || !categoryEl || !excerptEl) {
+                    console.error('表单元素未找到');
+                    alert('表单元素加载失败，请刷新页面重试');
+                    return;
+                }
+                
+                // 更新文章数据
+                currentArticle.title = titleEl.value;
+                currentArticle.category = categoryEl.value;
+                currentArticle.author = authorEl ? authorEl.value : '博主';
+                currentArticle.date = dateEl ? dateEl.value : new Date().toLocaleDateString('zh-CN').replace(/\//g, '-');
+                currentArticle.excerpt = excerptEl.value;
+                currentArticle.coverImage = coverEl ? coverEl.value : '';
+                currentArticle.visibility = visibilityEl ? visibilityEl.value : 'public';
+                currentArticle.content = quillEditor ? quillEditor.root.innerHTML : '';
+                
+                console.log('文章数据已更新:', currentArticle);
+                
+                // 保存到 localStorage
+                saveArticles();
+                console.log('已保存到 localStorage');
+                
+                // 更新列表显示
+                renderArticleList();
+                console.log('列表已更新');
+                
+                // 显示保存状态
+                if (!isAutoSave) {
+                    updateStatus('✅ 已保存', 'saved');
+                    setTimeout(() => updateStatus('就绪'), 2000);
+                } else {
+                    updateStatus('💾 自动保存', 'saved');
+                }
+                
+            } catch (error) {
+                console.error('保存失败:', error);
+                alert('保存失败：' + error.message);
+                updateStatus('❌ 保存失败', 'unsaved');
             }
         }
 
@@ -1160,6 +1208,41 @@
         // 更新选中计数
         function updateSelectedCount() {
             document.getElementById('selected-count').textContent = selectedArticles.size;
+        }
+
+        // 测试保存功能
+        function testSave() {
+            console.log('=== 保存功能测试 ===');
+            console.log('当前文章:', currentArticle);
+            console.log('文章数组:', articles);
+            console.log('Quill 编辑器:', quillEditor);
+            
+            if (!currentArticle) {
+                alert('❌ 没有选中的文章');
+                return;
+            }
+            
+            const titleEl = document.getElementById('input-title');
+            const categoryEl = document.getElementById('input-category');
+            
+            console.log('标题元素:', titleEl);
+            console.log('分类元素:', categoryEl);
+            console.log('标题值:', titleEl?.value);
+            console.log('分类值:', categoryEl?.value);
+            
+            // 尝试保存
+            try {
+                saveCurrentArticle(false);
+                
+                // 验证保存结果
+                const saved = localStorage.getItem('articles');
+                console.log('localStorage 中的数据:', saved);
+                
+                alert('✅ 保存测试完成！\n\n请查看浏览器控制台了解详细信息。');
+            } catch (error) {
+                console.error('保存测试失败:', error);
+                alert('❌ 保存测试失败：' + error.message);
+            }
         }
 
         // 从仓库导入文章
