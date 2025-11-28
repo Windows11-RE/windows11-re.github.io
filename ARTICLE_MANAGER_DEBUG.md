@@ -224,3 +224,295 @@ location.reload();
 - ✅ **状态提示** - 实时反馈
 
 请打开文章管理器，按 F12 查看控制台，然后点击"🧪 测试保存"按钮，告诉我控制台显示了什么！
+
+
+---
+
+## 📸 图片存储问题排查
+
+### 问题：保存时出现存储空间不足错误
+
+**错误信息：**
+```
+Failed to execute 'setItem' on 'Storage': Setting the value of 'articles' exceeded the quota.
+```
+
+**原因：**
+- localStorage 存储限制为 5-10MB
+- 图片转换为 base64 后体积增加约 33%
+- 大图片会快速占满存储空间
+
+### ✅ 已实现的自动优化
+
+#### 1. 自动图片压缩
+- 插入图片时自动检测大小
+- 超过 500KB 自动压缩
+- 压缩参数：最大宽度 1200px，质量 80%
+- 显示压缩前后的大小对比
+
+**测试方法：**
+1. 在编辑器中点击图片按钮
+2. 选择一张大图片（> 1MB）
+3. 查看控制台输出：
+```
+原始图片大小：3.74 MB
+图片压缩完成：
+原始大小：4956.23 KB
+压缩后大小：856.45 KB
+压缩率：82.72%
+```
+
+#### 2. 存储空间检查
+- 保存前自动检查空间是否足够
+- 显示详细的错误信息和建议
+
+**测试方法：**
+1. 打开控制台（F12）
+2. 查看页面加载时的存储信息：
+```
+=== 存储空间使用情况 ===
+总使用：3.45 MB
+文章数据：3.20 MB
+使用率：69.0%
+```
+
+#### 3. 存储空间警告
+- 使用率超过 70% 时自动显示警告
+- 右上角显示橙色提示框
+- 建议使用图床服务
+
+### 🔍 排查步骤
+
+#### 步骤 1：检查存储使用情况
+在控制台运行：
+```javascript
+let totalSize = 0;
+for (let key in localStorage) {
+    if (localStorage.hasOwnProperty(key)) {
+        totalSize += localStorage[key].length + key.length;
+    }
+}
+console.log('总使用：', (totalSize / 1024 / 1024).toFixed(2), 'MB');
+```
+
+#### 步骤 2：查看文章数据大小
+```javascript
+const articles = localStorage.getItem('articles');
+if (articles) {
+    console.log('文章数据大小：', (articles.length / 1024 / 1024).toFixed(2), 'MB');
+}
+```
+
+#### 步骤 3：统计图片数量和大小
+```javascript
+const articles = JSON.parse(localStorage.getItem('articles') || '[]');
+let imageCount = 0;
+let imageSize = 0;
+
+articles.forEach(article => {
+    const matches = article.content.match(/<img[^>]+src="data:image[^"]+"/g);
+    if (matches) {
+        imageCount += matches.length;
+        matches.forEach(match => {
+            imageSize += match.length;
+        });
+    }
+});
+
+console.log('图片数量：', imageCount);
+console.log('图片总大小：', (imageSize / 1024 / 1024).toFixed(2), 'MB');
+```
+
+### 🎯 解决方案
+
+#### 方案 1：使用图床服务（推荐）
+详见 `IMAGE_STORAGE_GUIDE.md`
+
+推荐的免费图床：
+- Imgur: https://imgur.com
+- SM.MS: https://sm.ms
+- 路过图床: https://imgse.com
+
+#### 方案 2：压缩现有图片
+1. 打开 `test-image-compression.html`
+2. 上传图片测试压缩效果
+3. 下载压缩后的图片
+4. 在文章中替换原图片
+
+#### 方案 3：清理旧文章
+```javascript
+// 删除所有文章（谨慎使用！）
+localStorage.removeItem('articles');
+location.reload();
+```
+
+### 🧪 测试图片压缩
+
+#### 方法 1：使用测试页面
+1. 打开 `test-image-compression.html`
+2. 上传图片
+3. 查看压缩结果
+4. 下载压缩后的图片
+
+#### 方法 2：在控制台测试
+```javascript
+// 测试压缩函数
+async function testCompression() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const original = event.target.result;
+            console.log('原始大小：', (original.length / 1024).toFixed(2), 'KB');
+            
+            // 这里需要 compressImage 函数
+            const compressed = await compressImage(original, 1200, 0.8);
+            console.log('压缩后大小：', (compressed.length / 1024).toFixed(2), 'KB');
+            console.log('压缩率：', ((1 - compressed.length / original.length) * 100).toFixed(2), '%');
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
+
+testCompression();
+```
+
+### 💡 使用建议
+
+#### 插入图片的最佳实践
+1. ✅ **优先使用图床 URL**
+   - 不占用 localStorage 空间
+   - 加载速度更快
+   - 没有大小限制
+
+2. ✅ **压缩后再上传**
+   - 使用在线工具压缩
+   - 目标：< 200KB
+   - 保持合理的视觉质量
+
+3. ❌ **避免直接插入大图片**
+   - 不要插入 > 1MB 的图片
+   - 会快速占满存储空间
+   - 可能导致保存失败
+
+#### 监控存储空间
+- 打开编辑器时查看控制台
+- 注意右上角的警告提示
+- 使用率超过 70% 时及时清理
+
+#### 定期维护
+1. 删除不需要的旧文章
+2. 将 base64 图片替换为图床链接
+3. 导出文章备份
+4. 清空 localStorage 重新开始
+
+### 🚨 紧急情况处理
+
+#### 如果无法保存任何内容
+
+**方法 1：导出现有数据**
+```javascript
+// 导出所有文章
+const articles = localStorage.getItem('articles');
+const blob = new Blob([articles], { type: 'application/json' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = 'articles-backup.json';
+a.click();
+```
+
+**方法 2：清空存储**
+```javascript
+// 备份后清空
+localStorage.clear();
+location.reload();
+```
+
+**方法 3：删除最大的文章**
+```javascript
+const articles = JSON.parse(localStorage.getItem('articles') || '[]');
+articles.sort((a, b) => JSON.stringify(b).length - JSON.stringify(a).length);
+console.log('最大的文章：', articles[0].title, 
+    (JSON.stringify(articles[0]).length / 1024).toFixed(2), 'KB');
+// 手动删除这篇文章
+```
+
+### 📊 存储空间分析工具
+
+在控制台运行以下代码，查看详细的存储分析：
+
+```javascript
+function analyzeStorage() {
+    console.log('=== 存储空间详细分析 ===\n');
+    
+    // 总体统计
+    let total = 0;
+    const items = {};
+    
+    for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+            const size = localStorage[key].length + key.length;
+            total += size;
+            items[key] = size;
+        }
+    }
+    
+    console.log('总使用：', (total / 1024 / 1024).toFixed(2), 'MB');
+    console.log('预估限制：5-10 MB');
+    console.log('使用率：', ((total / (5 * 1024 * 1024)) * 100).toFixed(1), '%\n');
+    
+    // 各项统计
+    console.log('各项数据大小：');
+    Object.entries(items)
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([key, size]) => {
+            console.log(`  ${key}: ${(size / 1024).toFixed(2)} KB`);
+        });
+    
+    // 文章统计
+    const articles = JSON.parse(localStorage.getItem('articles') || '[]');
+    console.log('\n文章统计：');
+    console.log('  总数：', articles.length);
+    
+    if (articles.length > 0) {
+        const sizes = articles.map(a => JSON.stringify(a).length);
+        const avgSize = sizes.reduce((a, b) => a + b, 0) / sizes.length;
+        const maxSize = Math.max(...sizes);
+        const maxArticle = articles[sizes.indexOf(maxSize)];
+        
+        console.log('  平均大小：', (avgSize / 1024).toFixed(2), 'KB');
+        console.log('  最大文章：', maxArticle.title, '-', (maxSize / 1024).toFixed(2), 'KB');
+        
+        // 统计图片
+        let totalImages = 0;
+        articles.forEach(article => {
+            const matches = article.content.match(/<img[^>]+src="data:image/g);
+            if (matches) totalImages += matches.length;
+        });
+        console.log('  图片总数：', totalImages);
+    }
+    
+    console.log('\n=== 分析完成 ===');
+}
+
+analyzeStorage();
+```
+
+### 🎊 总结
+
+现在文章管理器有了完善的图片处理功能：
+
+- ✅ **自动压缩** - 大图片自动压缩到合理大小
+- ✅ **空间检查** - 保存前检查是否有足够空间
+- ✅ **友好提示** - 详细的错误信息和建议
+- ✅ **空间监控** - 实时显示存储使用情况
+- ✅ **测试工具** - 独立的图片压缩测试页面
+
+**推荐阅读：**
+- `IMAGE_STORAGE_GUIDE.md` - 详细的图片存储解决方案
+- `test-image-compression.html` - 图片压缩测试工具

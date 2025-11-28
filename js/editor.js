@@ -17,6 +17,78 @@ function getUrlParam(name) {
     return urlParams.get(name);
 }
 
+// 压缩图片
+function compressImage(base64Image, maxWidth = 1200, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            
+            // 如果图片宽度超过最大宽度，按比例缩放
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // 转换为 JPEG 格式并压缩
+            const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            
+            console.log('图片压缩完成：');
+            console.log('原始大小：', (base64Image.length / 1024).toFixed(2), 'KB');
+            console.log('压缩后大小：', (compressedBase64.length / 1024).toFixed(2), 'KB');
+            console.log('压缩率：', ((1 - compressedBase64.length / base64Image.length) * 100).toFixed(2), '%');
+            
+            resolve(compressedBase64);
+        };
+        img.onerror = reject;
+        img.src = base64Image;
+    });
+}
+
+// 检查 localStorage 可用空间
+function checkStorageSpace(dataToSave) {
+    try {
+        const testKey = '__storage_test__';
+        localStorage.setItem(testKey, dataToSave);
+        localStorage.removeItem(testKey);
+        return { success: true };
+    } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+            // 计算当前使用的空间
+            let totalSize = 0;
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    totalSize += localStorage[key].length + key.length;
+                }
+            }
+            
+            const usedMB = (totalSize / 1024 / 1024).toFixed(2);
+            const dataSize = (dataToSave.length / 1024 / 1024).toFixed(2);
+            
+            return {
+                success: false,
+                error: 'QuotaExceededError',
+                message: `存储空间不足！\n\n当前已使用：${usedMB} MB\n本次保存需要：${dataSize} MB\n\n建议：\n1. 压缩或删除文章中的大图片\n2. 使用图床服务（如 imgur.com）\n3. 删除一些旧文章`,
+                usedMB,
+                dataSize
+            };
+        }
+        return {
+            success: false,
+            error: e.name,
+            message: '保存失败：' + e.message
+        };
+    }
+}
+
 // 初始化 Quill 编辑器
 function initQuillEditor() {
     console.log('开始初始化 Quill 编辑器...');
@@ -53,7 +125,12 @@ function initQuillEditor() {
         quillEditor = new Quill('#editor-container', {
             theme: 'snow',
             modules: {
-                toolbar: toolbarOptions
+                toolbar: {
+                    container: toolbarOptions,
+                    handlers: {
+                        image: imageHandler
+                    }
+                }
             },
             placeholder: '开始编写你的文章内容...'
         });
@@ -69,6 +146,88 @@ function initQuillEditor() {
         console.error('Quill 编辑器初始化失败：', error);
         alert('编辑器初始化失败：' + error.message);
     }
+}
+
+// 自定义图片处理器
+function imageHandler() {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/*');
+    input.click();
+
+    input.onchange = async () => {
+        const file = input.files[0];
+        if (!file) return;
+
+        // 检查文件类型
+        if (!file.type.startsWith('image/')) {
+            alert('请选择图片文件！');
+            return;
+        }
+
+        // 显示处理提示
+        const loadingMsg = document.createElement('div');
+        loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:white;padding:20px;border-radius:8px;z-index:10000;';
+        loadingMsg.textContent = '正在处理图片...';
+        document.body.appendChild(loadingMsg);
+
+        try {
+            // 读取文件
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    let base64Image = e.target.result;
+                    const originalSize = (base64Image.length / 1024 / 1024).toFixed(2);
+                    
+                    console.log('原始图片大小：', originalSize, 'MB');
+
+                    // 如果图片大于 500KB，自动压缩
+                    if (base64Image.length > 500 * 1024) {
+                        loadingMsg.textContent = '图片较大，正在压缩...';
+                        base64Image = await compressImage(base64Image, 1200, 0.8);
+                        
+                        const compressedSize = (base64Image.length / 1024 / 1024).toFixed(2);
+                        console.log('压缩后大小：', compressedSize, 'MB');
+                        
+                        // 如果压缩后仍然很大，提示用户
+                        if (base64Image.length > 2 * 1024 * 1024) {
+                            const useAnyway = confirm(
+                                `图片压缩后仍然较大（${compressedSize} MB）\n\n` +
+                                `建议使用图床服务（如 imgur.com）上传图片，然后插入链接。\n\n` +
+                                `是否仍要插入此图片？\n` +
+                                `（可能导致保存失败）`
+                            );
+                            if (!useAnyway) {
+                                document.body.removeChild(loadingMsg);
+                                return;
+                            }
+                        }
+                    }
+
+                    // 插入图片到编辑器
+                    const range = quillEditor.getSelection(true);
+                    quillEditor.insertEmbed(range.index, 'image', base64Image);
+                    quillEditor.setSelection(range.index + 1);
+                    
+                    document.body.removeChild(loadingMsg);
+                    
+                    // 提示用户
+                    if (originalSize > 0.5) {
+                        alert(`图片已插入！\n原始大小：${originalSize} MB\n当前大小：${(base64Image.length / 1024 / 1024).toFixed(2)} MB\n\n💡 建议：使用图床服务可以避免存储空间限制`);
+                    }
+                } catch (error) {
+                    document.body.removeChild(loadingMsg);
+                    console.error('图片处理失败：', error);
+                    alert('图片处理失败：' + error.message);
+                }
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            document.body.removeChild(loadingMsg);
+            console.error('图片读取失败：', error);
+            alert('图片读取失败：' + error.message);
+        }
+    };
 }
 
 // 加载文章数据到编辑器
@@ -167,9 +326,29 @@ function savePost() {
         posts.unshift(newPost);
     }
     
-    savePosts(posts);
-    alert('文章保存成功！');
-    window.location.href = 'admin.html';
+    // 检查存储空间
+    const dataToSave = JSON.stringify(posts);
+    const spaceCheck = checkStorageSpace(dataToSave);
+    
+    if (!spaceCheck.success) {
+        console.error('存储空间检查失败：', spaceCheck);
+        alert(spaceCheck.message);
+        return;
+    }
+    
+    // 保存文章
+    try {
+        savePosts(posts);
+        alert('文章保存成功！');
+        window.location.href = 'admin.html';
+    } catch (error) {
+        console.error('保存失败：', error);
+        if (error.name === 'QuotaExceededError') {
+            alert('存储空间不足！\n\n建议：\n1. 压缩或删除文章中的大图片\n2. 使用图床服务（如 imgur.com）\n3. 删除一些旧文章');
+        } else {
+            alert('保存失败：' + error.message);
+        }
+    }
 }
 
 // 预览文章
@@ -214,7 +393,7 @@ function closePreview() {
 // 这个函数已不再需要，因为 Quill 编辑器有自己的工具栏
 
 // 处理封面图片上传
-function handleCoverImageUpload(event) {
+async function handleCoverImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     
@@ -224,20 +403,51 @@ function handleCoverImageUpload(event) {
         return;
     }
     
-    // 检查文件大小（限制5MB）
-    if (file.size > 5 * 1024 * 1024) {
-        alert('图片大小不能超过 5MB！');
-        return;
-    }
+    // 显示处理提示
+    const loadingMsg = document.createElement('div');
+    loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.8);color:white;padding:20px;border-radius:8px;z-index:10000;';
+    loadingMsg.textContent = '正在处理封面图片...';
+    document.body.appendChild(loadingMsg);
     
-    // 读取文件并转换为 Base64
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const base64Image = e.target.result;
-        document.getElementById('post-cover').value = base64Image;
-        showCoverPreview(base64Image);
-    };
-    reader.readAsDataURL(file);
+    try {
+        // 读取文件并转换为 Base64
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                let base64Image = e.target.result;
+                const originalSize = (base64Image.length / 1024 / 1024).toFixed(2);
+                
+                console.log('封面图片原始大小：', originalSize, 'MB');
+                
+                // 如果图片大于 500KB，自动压缩
+                if (base64Image.length > 500 * 1024) {
+                    loadingMsg.textContent = '图片较大，正在压缩...';
+                    base64Image = await compressImage(base64Image, 1200, 0.85);
+                    
+                    const compressedSize = (base64Image.length / 1024 / 1024).toFixed(2);
+                    console.log('压缩后大小：', compressedSize, 'MB');
+                }
+                
+                document.getElementById('post-cover').value = base64Image;
+                showCoverPreview(base64Image);
+                
+                document.body.removeChild(loadingMsg);
+                
+                if (originalSize > 0.5) {
+                    alert(`封面图片已设置！\n原始大小：${originalSize} MB\n当前大小：${(base64Image.length / 1024 / 1024).toFixed(2)} MB`);
+                }
+            } catch (error) {
+                document.body.removeChild(loadingMsg);
+                console.error('封面图片处理失败：', error);
+                alert('封面图片处理失败：' + error.message);
+            }
+        };
+        reader.readAsDataURL(file);
+    } catch (error) {
+        document.body.removeChild(loadingMsg);
+        console.error('封面图片读取失败：', error);
+        alert('封面图片读取失败：' + error.message);
+    }
 }
 
 // 显示封面预览
@@ -461,12 +671,74 @@ function viewPostInFrontend(postId) {
     window.open(`post.html?id=${postId}`, '_blank');
 }
 
+// 显示存储空间使用情况
+function showStorageInfo() {
+    let totalSize = 0;
+    let articlesSize = 0;
+    
+    for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+            const itemSize = localStorage[key].length + key.length;
+            totalSize += itemSize;
+            
+            if (key === 'blogPosts') {
+                articlesSize = itemSize;
+            }
+        }
+    }
+    
+    const totalMB = (totalSize / 1024 / 1024).toFixed(2);
+    const articlesMB = (articlesSize / 1024 / 1024).toFixed(2);
+    const limitMB = 5; // 大多数浏览器的限制
+    const usagePercent = ((totalSize / (limitMB * 1024 * 1024)) * 100).toFixed(1);
+    
+    console.log('=== 存储空间使用情况 ===');
+    console.log('总使用：', totalMB, 'MB');
+    console.log('文章数据：', articlesMB, 'MB');
+    console.log('使用率：', usagePercent, '%');
+    
+    // 如果使用率超过 70%，显示警告
+    if (usagePercent > 70) {
+        const warning = document.createElement('div');
+        warning.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff9800;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 9999;
+            max-width: 300px;
+            font-size: 14px;
+            line-height: 1.5;
+        `;
+        warning.innerHTML = `
+            <strong>⚠️ 存储空间警告</strong><br>
+            已使用 ${usagePercent}% (${totalMB} MB / ${limitMB} MB)<br>
+            <small>建议使用图床服务存储图片</small>
+        `;
+        document.body.appendChild(warning);
+        
+        // 5秒后自动关闭
+        setTimeout(() => {
+            warning.style.opacity = '0';
+            warning.style.transition = 'opacity 0.5s';
+            setTimeout(() => warning.remove(), 500);
+        }, 5000);
+    }
+}
+
 // 页面加载完成后执行
 document.addEventListener('DOMContentLoaded', () => {
     console.log('页面 DOM 加载完成');
     
     // 保护页面
     protectPage();
+    
+    // 显示存储空间信息
+    showStorageInfo();
     
     // 初始化 Quill 编辑器
     console.log('准备初始化 Quill 编辑器');
