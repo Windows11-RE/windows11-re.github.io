@@ -988,6 +988,114 @@
                 updatePreview();
                 scheduleAutoSave();
             });
+
+            // 智能粘贴：自动识别并转换图片链接
+            setupSmartPaste();
+        }
+
+        // 智能粘贴功能
+        function setupSmartPaste() {
+            const editor = quillEditor.root;
+            
+            editor.addEventListener('paste', (e) => {
+                // 获取粘贴的文本
+                const text = e.clipboardData.getData('text/plain');
+                
+                if (!text) return;
+                
+                // 检测各种图片链接格式
+                const patterns = {
+                    // Markdown: ![alt](url) 或 ![](url)
+                    markdown: /!\[([^\]]*)\]\(([^)]+)\)/g,
+                    // HTML: <img src="url" alt="alt"> 或 <img src="url">
+                    html: /<img[^>]+src=["']([^"']+)["'][^>]*>/gi,
+                    // BBCode: [img]url[/img]
+                    bbcode: /\[img\]([^\[]+)\[\/img\]/gi,
+                    // 纯 URL（以图片扩展名结尾）
+                    url: /https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp|svg|bmp)(?:\?[^\s]*)?/gi
+                };
+                
+                let hasImageLink = false;
+                let imagesToInsert = [];
+                
+                // 检测 Markdown 格式
+                let match;
+                while ((match = patterns.markdown.exec(text)) !== null) {
+                    hasImageLink = true;
+                    imagesToInsert.push({
+                        url: match[2],
+                        alt: match[1] || '图片'
+                    });
+                }
+                
+                // 检测 HTML 格式
+                patterns.html.lastIndex = 0;
+                while ((match = patterns.html.exec(text)) !== null) {
+                    hasImageLink = true;
+                    const url = match[1];
+                    const altMatch = match[0].match(/alt=["']([^"']+)["']/i);
+                    imagesToInsert.push({
+                        url: url,
+                        alt: altMatch ? altMatch[1] : '图片'
+                    });
+                }
+                
+                // 检测 BBCode 格式
+                patterns.bbcode.lastIndex = 0;
+                while ((match = patterns.bbcode.exec(text)) !== null) {
+                    hasImageLink = true;
+                    imagesToInsert.push({
+                        url: match[1],
+                        alt: '图片'
+                    });
+                }
+                
+                // 检测纯 URL
+                if (imagesToInsert.length === 0) {
+                    patterns.url.lastIndex = 0;
+                    while ((match = patterns.url.exec(text)) !== null) {
+                        hasImageLink = true;
+                        imagesToInsert.push({
+                            url: match[0],
+                            alt: '图片'
+                        });
+                    }
+                }
+                
+                // 如果检测到图片链接，阻止默认粘贴并插入图片
+                if (hasImageLink && imagesToInsert.length > 0) {
+                    e.preventDefault();
+                    
+                    console.log('检测到图片链接，自动转换：', imagesToInsert);
+                    
+                    // 获取当前光标位置
+                    const range = quillEditor.getSelection(true);
+                    let index = range ? range.index : quillEditor.getLength();
+                    
+                    // 插入所有检测到的图片
+                    imagesToInsert.forEach((img, i) => {
+                        quillEditor.insertEmbed(index, 'image', img.url);
+                        index++;
+                        
+                        // 如果有多张图片，在图片之间插入换行
+                        if (i < imagesToInsert.length - 1) {
+                            quillEditor.insertText(index, '\n');
+                            index++;
+                        }
+                    });
+                    
+                    // 移动光标到最后
+                    quillEditor.setSelection(index);
+                    
+                    // 显示提示
+                    const count = imagesToInsert.length;
+                    updateStatus(`✅ 已插入 ${count} 张图片`, 'success');
+                    
+                    // 触发更新
+                    updatePreview();
+                    scheduleAutoSave();
+                }
+            });
         }
 
         // 更新预览
